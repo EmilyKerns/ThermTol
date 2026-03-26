@@ -519,6 +519,12 @@ summary(RMREndQ.a)
 # Multiple R-squared:  0.4464,	Adjusted R-squared:  0.4117 
 # F-statistic:  12.9 on 4 and 64 DF,  p-value: 9.283e-08
 
+# test quadratic additive without sex since it was n.s.
+RMREndQ.nosex <- lm(RMR ~ I(Temp^2) + Temp + Ecotype, data = End)
+plot(RMREndQ.nosex)
+AIC(RMREndQ.nosex) #902.7287
+summary(RMREndQ.nosex)
+
 
 RMREnd <- ggplot(End, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
   geom_point(position =  position_jitterdodge(jitter.width = 0.0001, jitter.height = 0.0001, dodge.width = 1), alpha= 0.1) +
