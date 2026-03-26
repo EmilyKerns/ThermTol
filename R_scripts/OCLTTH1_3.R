@@ -18,40 +18,34 @@
 
 # Assumption 1 ------------------------------------------------------------
 
-#First testing for Ecotype*Temp interaction, then additive effects only
+#First testing for Ecotype*Temp interaction
 MMRL.i <- lm(MMR ~ Temp*Ecotype , data = Start)
 plot(MMRL.i) #residuals look reasonably even
 AIC(MMRL.i)# 2692.5
 summary(MMRL.i)
-
-#######Best model############
-#Additive effects--temp and ecotype significant##Best model, even better than lake depth/SA
-MMRL.a <- lm(MMR ~ Temp + Ecotype, data = Start)
-plot(MMRL.a)
-AIC(MMRL.a) #2690.939
-summary(MMRL.a)
-# Call:
-#   lm(formula = MMR ~ Temp + Ecotype, data = Start)
-# 
 # Residuals:
-# Min       1Q   Median       3Q      Max 
-# -1791.99  -235.09   -20.46   234.37   883.15 
+# Min      1Q  Median      3Q     Max 
+# -1790.4  -236.5    -6.9   241.0   871.1 
 # 
 # Coefficients:
-#                   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)       144.78     223.66   0.647    0.518    
-# Temp               78.18      10.10   7.741 6.85e-13 ***
-# EcotypeLimnetic    85.48      55.09   1.552    0.122    
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)             3.691    310.569   0.012    0.991    
+# Temp                   84.650     14.132   5.990 1.13e-08 ***
+#   EcotypeLimnetic       374.591    444.212   0.843    0.400    
+# Temp:EcotypeLimnetic  -13.273     20.236  -0.656    0.513    
+# ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 # 
-# Residual standard error: 372.3 on 180 degrees of freedom
-# Multiple R-squared:  0.2569,	Adjusted R-squared:  0.2486 
-# F-statistic: 31.11 on 2 and 180 DF,  p-value: 2.491e-12
+# Residual standard error: 372.9 on 179 degrees of freedom
+# Multiple R-squared:  0.2586,	Adjusted R-squared:  0.2462 
+# F-statistic: 20.82 on 3 and 179 DF,  p-value: 1.291e-11
 
-confint(MMRL.a, level = 0.95)
+confint(MMRL.i, level = 0.95)
 #                     2.5 %    97.5 %
-# (Intercept)     -296.55167 586.11419
-# Temp              58.24898  98.10393
-# EcotypeLimnetic  -23.21511 194.18287
+# (Intercept)          -609.15540  616.53814
+# Temp                   56.76301  112.53662
+# EcotypeLimnetic      -501.97441 1251.15701
+# Temp:EcotypeLimnetic  -53.20477   26.65875
 
 #Test quadratic fit
 MMRQ.quad <- lm(MMR ~ I(Temp^2)*Ecotype + Temp * Ecotype, data = Start)
@@ -89,7 +83,7 @@ MMRpoint <- ggplot(Start, aes(x=as.factor(Temp), y=MMR, color=Ecotype)) +
               se = TRUE, 
               alpha = .2)   +
   annotate("text", x =0.5, y = Inf, label = "A", hjust = 0, vjust = 1, size = 5, fontface = "bold")
-  #annotate("text", x =3.5, y = 200, label = "Temperature: p<0.0001", hjust = 0, vjust = -1, size = 2, fontface = "bold")
+#annotate("text", x =3.5, y = 200, label = "Temperature: p<0.0001", hjust = 0, vjust = -1, size = 2, fontface = "bold")
 MMRpoint
 
 
@@ -143,35 +137,28 @@ plot(RMRQ.i)
 AIC(RMRQ.i)#2443.451
 summary(RMRQ.i)
 
+### Best model ####
 #quadratic additive--no evidence for ecotype, but strong quadratic effect of temp
 RMRQ.a <- lm(RMR~ I(Temp^2) + Temp+ Ecotype, data = Start)
 plot(RMRQ.a) 
-AIC(RMRQ.a)#2445.096 - within 2 AIC of last model, best so far
+AIC(RMRQ.a)#2445.096 - within 2 AIC of last model
 summary(RMRQ.a)
-
-
-#######Best model############
-#Just quadratic
-RMRQ <- lm(RMR~ I(Temp^2) + Temp, data = Start)
-plot(RMRQ)
-AIC(RMRQ)#2443.832
-summary(RMRQ)
-# Call:
-#   lm(formula = RMR ~ I(Temp^2) + Temp, data = Start)
-# 
 # Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -583.85 -114.16    7.61  121.10  542.23 
+# -594.39 -117.74    1.53  123.70  531.02 
 # 
 # Coefficients:
-#             Estimate Std. Error t value Pr(>|t|)    
-# (Intercept) 2519.713   1005.141   2.507 0.013068 *  
-# I(Temp^2)      7.364      2.138   3.445 0.000711 ***
-# Temp        -241.074     93.289  -2.584 0.010554 *  
+#                 Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     2567.493   1007.488   2.548  0.01166 *  
+# I(Temp^2)          7.494      2.145   3.494  0.00060 ***
+# Temp            -246.710     93.596  -2.636  0.00913 ** 
+# EcotypeLimnetic   23.910     28.137   0.850  0.39658    
 # 
-# Residual standard error: 189.5 on 180 degrees of freedom
-# Multiple R-squared:  0.5841,	Adjusted R-squared:  0.5795 
-# F-statistic: 126.4 on 2 and 180 DF,  p-value: < 2.2e-16
+# Residual standard error: 189.7 on 179 degrees of freedom
+# Multiple R-squared:  0.5858,	Adjusted R-squared:  0.5788 
+# F-statistic: 84.37 on 3 and 179 DF,  p-value: < 2.2e-16
+
+
 
 RMRpoint <- ggplot(Start, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
   geom_point(position =  position_jitterdodge(jitter.width = 0.0001, jitter.height = 0.0001, dodge.width = 1), alpha= 0.1) +
@@ -189,12 +176,12 @@ RMRpoint <- ggplot(Start, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
   stat_smooth(aes(x = as.numeric(factor(Temp))), method = "lm", 
               formula = y ~ poly(x, 2, raw = TRUE), size = .5,se = TRUE,  alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 5.5, y = 70, 
-  #          label = expression(bold(Temperature^{2}~": p<0.001")), 
-  #          hjust = 1, vjust = 0, size = 2) +
-  # annotate("text", x = 5.5, y = 5, 
-  #          label = expression(bold("Temperature: p<0.05")), 
-  #          hjust = 1, vjust = 0, size = 2)
+# annotate("text", x = 5.5, y = 70, 
+#          label = expression(bold(Temperature^{2}~": p<0.001")), 
+#          hjust = 1, vjust = 0, size = 2) +
+# annotate("text", x = 5.5, y = 5, 
+#          label = expression(bold("Temperature: p<0.05")), 
+#          hjust = 1, vjust = 0, size = 2)
 RMRpoint
 
 
@@ -247,33 +234,6 @@ plot(ASQ.a)
 AIC(ASQ.a)#2654.31
 summary(ASQ.a)
 
-ASQ.null <- lm(AS ~ I(Temp^2) +Temp, data = Start)
-plot(ASQ.null)
-AIC(ASQ.null)#2653.867
-summary(ASQ.null)
-# Residuals:
-#   Min      1Q  Median      3Q     Max 
-# -1170.0  -202.7   -11.2   202.5   893.5 
-# 
-# Coefficients:
-#               Estimate Std. Error t value Pr(>|t|)  
-# (Intercept) -2518.910   1784.240  -1.412   0.1597  
-# I(Temp^2)      -7.771      3.795  -2.048   0.0420 *
-# Temp          336.897    165.598   2.034   0.0434 *
-# 
-# Residual standard error: 336.5 on 180 degrees of freedom
-# Multiple R-squared:  0.02295,	Adjusted R-squared:  0.01209 
-# F-statistic: 2.114 on 2 and 180 DF,  p-value: 0.1237
-
-# ASQ.null & ASL have equal AICs, and one model includes an interaction term while the other includes a quadratic term. Adj R^2 for both models is <2. Use ANOVA to compare them.
-anova(ASQ.null,ASL)
-# Analysis of Variance Table
-# 
-# Model 1: AS ~ I(Temp^2) + Temp
-# Model 2: AS ~ Temp * Ecotype
-# Res.Df      RSS Df Sum of Sq      F Pr(>F)
-# 1    180 20376595                           
-# 2    179 20102513  1    274081 2.4405   0.12 - not significantly different
 
 ASpoint <- ggplot(Start, aes(x=as.factor(Temp), y=AS, color=Ecotype)) +
   geom_point(position =  position_jitterdodge(jitter.width = 0.0001, jitter.height = 0.0001, dodge.width = 1), alpha= 0.1) +
@@ -291,12 +251,12 @@ ASpoint <- ggplot(Start, aes(x=as.factor(Temp), y=AS, color=Ecotype)) +
   stat_smooth(aes(x = as.numeric(factor(Temp))), method = "lm", 
               formula = y ~ poly(x, 2, raw = TRUE), size = .5,se = TRUE,  alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 5.5, y = 70, 
-  #          label = expression(bold(Temperature^{2}~": p<0.05")), 
-  #          hjust = 1, vjust = 0, size = 2) +
-  # annotate("text", x = 5.5, y = 5, 
-  #          label = expression(bold("Temperature: p<0.05")), 
-  #          hjust = 1, vjust = 0, size = 2)
+# annotate("text", x = 5.5, y = 70, 
+#          label = expression(bold(Temperature^{2}~": p<0.05")), 
+#          hjust = 1, vjust = 0, size = 2) +
+# annotate("text", x = 5.5, y = 5, 
+#          label = expression(bold("Temperature: p<0.05")), 
+#          hjust = 1, vjust = 0, size = 2)
 ASpoint
 
 
@@ -320,12 +280,12 @@ ASpointL <- ggplot(Start, aes(x=as.factor(Temp), y=AS, color=Ecotype)) +
               se = TRUE, 
               alpha = .2)   +
   annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 5.5, y = 70, 
-  #          label = expression(bold(Ecotype~": p<0.05")), 
-  #          hjust = 1, vjust = 0, size = 2) +
-  # annotate("text", x = 5.5, y = 5, 
-  #          label = expression(bold("Temperature*Ecotype: p<0.05")), 
-  #          hjust = 1, vjust = 0, size = 2)
+# annotate("text", x = 5.5, y = 70, 
+#          label = expression(bold(Ecotype~": p<0.05")), 
+#          hjust = 1, vjust = 0, size = 2) +
+# annotate("text", x = 5.5, y = 5, 
+#          label = expression(bold("Temperature*Ecotype: p<0.05")), 
+#          hjust = 1, vjust = 0, size = 2)
 ASpointL
 
 
@@ -393,15 +353,15 @@ MMREnd <- ggplot(End, aes(x=factor(Temp), y=MMR, color=Ecotype)) +
   stat_smooth(aes(x = as.numeric(factor(Temp))), method = "lm", 
               formula = y ~ poly(x, 2, raw = TRUE), size = .5,se = TRUE,  alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 3.5, y = 250, 
-  #          label = expression(bold(Temperature^{2}~": p<0.0001")), 
-  #          hjust = 1, vjust = 0, size = 2) +
-  # annotate("text", x = 3.5, y = 130, 
-  #          label = expression(bold("Temperature: p<0.0001")), 
-  #          hjust = 1, vjust = 0, size = 2)+
-  # annotate("text", x = 3.5, y = 5, 
-  #          label = expression(bold("Ecotype: p<0.05")), 
-  #          hjust = 1, vjust = 0, size = 2)
+# annotate("text", x = 3.5, y = 250, 
+#          label = expression(bold(Temperature^{2}~": p<0.0001")), 
+#          hjust = 1, vjust = 0, size = 2) +
+# annotate("text", x = 3.5, y = 130, 
+#          label = expression(bold("Temperature: p<0.0001")), 
+#          hjust = 1, vjust = 0, size = 2)+
+# annotate("text", x = 3.5, y = 5, 
+#          label = expression(bold("Ecotype: p<0.05")), 
+#          hjust = 1, vjust = 0, size = 2)
 MMREnd
 
 MMRSex <- ggplot(End, aes(x=factor(Temp), y=MMR, color=Sex)) +
@@ -517,7 +477,7 @@ effectsize::standardize_parameters(Fib.ecotype, exp = TRUE)
 #
 # - Response is unstandardized.
 
- 
+
 
 # Assumption 2 ------------------------------------------------------------
 
@@ -537,32 +497,27 @@ plot(RMREndQ.i)
 AIC(RMREndQ.i) # 902.283
 summary(RMREndQ.i)
 
+###### Best model ######
 # test quadratic additive - sig effect of quadratic and linear temp but not ecotype or sex
 RMREndQ.a <- lm(RMR ~ I(Temp^2) + Temp + Ecotype + Sex, data = End)
 plot(RMREndQ.a)
 AIC(RMREndQ.a) #901.9981
 summary(RMREndQ.a)
-
-
-###### Best model ######
-# test null quadratic temp and sex - sig effect of quadratic and linear temp. sex is marginally sig
-RMREndQ.null <- lm(RMR ~ I(Temp^2) + Temp + Sex, data = End)
-plot(RMREndQ.null)
-AIC(RMREndQ.null) #901.6403
-summary(RMREndQ.null)
+# Residuals:
 #   Min      1Q  Median      3Q     Max 
-# -367.83 -100.81    2.73   91.37  502.75 
+# -397.03  -91.15    5.62   83.35  473.54 
 # 
 # Coefficients:
-#               Estimate Std. Error t value Pr(>|t|)    
-# (Intercept) 5557.995   1184.602   4.692 1.44e-05 ***
-# I(Temp^2)     12.162      2.576   4.721 1.29e-05 ***
-# Temp        -492.857    111.328  -4.427 3.74e-05 ***
-# SexM         -65.206     38.810  -1.680   0.0977 .  
+#                   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     5797.192   1195.327   4.850 8.25e-06 ***
+# I(Temp^2)         12.859      2.626   4.896 6.95e-06 ***
+# Temp            -520.241    113.039  -4.602 2.03e-05 ***
+# EcotypeLimnetic   51.954     41.846   1.242    0.219    
+# SexM             -62.240     38.723  -1.607    0.113    
 # 
-# Residual standard error: 159.5 on 65 degrees of freedom
-# Multiple R-squared:  0.433,	Adjusted R-squared:  0.4068 
-# F-statistic: 16.55 on 3 and 65 DF,  p-value: 4.274e-08
+# Residual standard error: 158.8 on 64 degrees of freedom
+# Multiple R-squared:  0.4464,	Adjusted R-squared:  0.4117 
+# F-statistic:  12.9 on 4 and 64 DF,  p-value: 9.283e-08
 
 
 RMREnd <- ggplot(End, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
@@ -581,12 +536,12 @@ RMREnd <- ggplot(End, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
   stat_smooth(aes(x = as.numeric(factor(Temp))), method = "lm", 
               formula = y ~ poly(x, 2, raw = TRUE), size = .5,se = TRUE,  alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 3.5, y = 50, 
-  #          label = expression(bold(Temperature^{2}~": p<0.0001")), 
-  #          hjust = 1, vjust = 0, size = 2) +
-  # annotate("text", x = 3.5, y = 5, 
-  #          label = expression(bold("Temperature: p<0.0001")), 
-  #          hjust = 1, vjust = 0, size = 2)
+# annotate("text", x = 3.5, y = 50, 
+#          label = expression(bold(Temperature^{2}~": p<0.0001")), 
+#          hjust = 1, vjust = 0, size = 2) +
+# annotate("text", x = 3.5, y = 5, 
+#          label = expression(bold("Temperature: p<0.0001")), 
+#          hjust = 1, vjust = 0, size = 2)
 RMREnd
 
 RMRSex <- ggplot(End, aes(x=factor(Temp), y=RMR, color=Sex)) +
@@ -672,15 +627,15 @@ ASEnd <- ggplot(End, aes(x=factor(Temp), y=AS, color=Ecotype)) +
   stat_smooth(aes(x = as.numeric(factor(Temp))), method = "lm", 
               formula = y ~ poly(x, 2, raw = TRUE), size = .5,se = TRUE,  alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "F", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 3.5, y = 2400, 
-  #          label = expression(bold(Temperature^{2}~": p<0.01")), 
-  #          hjust = 1, vjust = 0, size = 2) +
-  # annotate("text", x = 3.5, y = 2300, 
-  #          label = expression(bold("Temperature: p<0.01")), 
-  #          hjust = 1, vjust = 0, size = 2)+
-  # annotate("text", x = 3.5, y = 2200, 
-  #          label = expression(bold("Ecotype: p<0.01")), 
-  #          hjust = 1, vjust = 0, size = 2)
+# annotate("text", x = 3.5, y = 2400, 
+#          label = expression(bold(Temperature^{2}~": p<0.01")), 
+#          hjust = 1, vjust = 0, size = 2) +
+# annotate("text", x = 3.5, y = 2300, 
+#          label = expression(bold("Temperature: p<0.01")), 
+#          hjust = 1, vjust = 0, size = 2)+
+# annotate("text", x = 3.5, y = 2200, 
+#          label = expression(bold("Ecotype: p<0.01")), 
+#          hjust = 1, vjust = 0, size = 2)
 ASEnd
 
 ASSex <- ggplot(End, aes(x=factor(Temp), y=AS, color=Sex)) +
@@ -835,8 +790,8 @@ MMRfib
 
 
 pdf(file = "/home/ekerns/ThermTol/Figures/Figure3Q.pdf",
- width = 7,
-height = 6.25)
+    width = 7,
+    height = 6.25)
 
 MMRpoint + RMRpoint + ASpoint + MMREnd + RMREnd + ASEnd
 
@@ -851,15 +806,15 @@ MMRpoint + RMRpoint + ASpointL + MMREnd + RMREnd + ASEnd
 dev.off()
 
 pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure2.pdf",
-     width = 6.6, 
-     height = 4)
+    width = 6.6, 
+    height = 4)
 
 MMRSex + RMRSex + ASSex
 
- dev.off()
+dev.off()
 
 pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure1.pdf",
-     width = 6.5, 
+    width = 6.5, 
     height = 4)
 
 MMRSApoint + RMRSApoint + ASSApoint
