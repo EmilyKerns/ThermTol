@@ -1,121 +1,6 @@
 # OCLTTH Prediction 4
 # Figure 4
-
-# Load Packages -----------------------------------------------------------
-{
-library(car)
-library(ggplot2)
-library(MASS)
-library(rstatix)
-library(plyr)
-library(dplyr)
-library(tidyverse)
-library(ggpubr)
-library(FSA)
-library(dunn.test)
-library(emmeans)
-library(lmtest)
-library(patchwork)
-library(AER)
-library(viridisLite)
-library(viridis)
-library(modelsummary)
-library(readxl)
-library(permuco)
-library(pgirmess)
-library(nlme)
-}
-
-# Load data ---------------------------------------------------------------
-
-{
-ThermTol <- read_xlsx("/home/ekerns/ThermTol/RawData/12125_ThermTol_OutliersRemoved.xlsx")
-head(ThermTol)
-
-ThermTol_CCD <- read_xlsx("/home/ekerns/ThermTol/RawData/ThermalToleranceProject_SuspectDataRemoved.xlsx")
-head(ThermTol_CCD)
-
-ThermTol$Ecotype <- as.factor(ThermTol$Ecotype)
-ThermTol$Fibrosis <- as.factor(ThermTol$Fibrosis)
-ThermTol$Trial <- as.factor(ThermTol$Trial)
-
-ThermTol$CCD <- ThermTol_CCD$CCD[match(ThermTol$FishID, ThermTol_CCD$FishID)]
-
-EcotypeMortality <- read_xlsx("/home/ekerns/ThermTol/RawData/EcotypeMortality.xlsx")
-head(EcotypeMortality)
-
-LakeData <- read_xlsx("/home/ekerns/ThermTol/RawData/depth_profiles.xlsx")
-LakeData <- subset(LakeData, Lake == "Finger" | Lake == "Watson" | Lake == "Spirit" | Lake == "Wik")
-
-LakeData <- LakeData %>% mutate(
-  Lake = case_when(
-    Lake == "Finger" ~ "FG",
-    Lake == "Spirit" ~ "SL",
-    Lake == "Watson" ~ "WT",
-    Lake == "Wik" ~ "WK",
-    TRUE ~ "Yer missing something"  # A default value if none of the conditions match
-  ))
-
-colnames(LakeData)[3] <- "DepthM"
-colnames(LakeData)[1] <- "Pop"
-head(LakeData)
-
-LakeData <- LakeData %>% 
-  group_by(Pop) %>% 
-  mutate(MinDepth = max(DepthM, na.rm = TRUE), 
-            MaxDepth = min(DepthM, na.rm = TRUE),
-            MedDepth = median(DepthM, na.rm = TRUE),
-            MeanDepth = mean(DepthM, na.rm = TRUE),
-            SA = first(SA))
-LakeData
-
-LakeSummary <- LakeData %>%
-  ungroup() %>%
-  dplyr::select(Pop, DepthM, SA) %>%
-  dplyr::group_by(Pop) %>%
-  dplyr::summarise(
-    SA        = first(SA),
-    MinDepth  = max(DepthM, na.rm = TRUE),
-    MaxDepth  = min(DepthM, na.rm = TRUE),
-    MedDepth  = median(DepthM, na.rm = TRUE),
-    MeanDepth = mean(DepthM, na.rm = TRUE),
-    .groups   = "drop"
-  )
-
-
-ThermTol <- left_join(ThermTol, LakeSummary, by = "Pop")
-head(ThermTol)
-}
-
-# Relabel data ------------------------------------------------------------
-
-
-{
-ThermTol$Trial <- factor(ThermTol$Trial, levels = c("S", "F"), 
-                         labels = c("Start", "End"))
-
-ThermTolTAF <- ThermTol 
-ThermTolTAF$Temp <- as.factor(ThermTolTAF$Temp)
-
-EcotypeMortalityTAF <- EcotypeMortality 
-EcotypeMortalityTAF$Temp <- as.factor(EcotypeMortalityTAF$Temp)
-}
-
-# Clean up data -------------------------------------------------
-{
-# Fulton's Body condition = (Mass / SL^3)100
-ThermTol$BodyCond <- ((ThermTol$Mass/(ThermTol$SL)^3)*100)
-hist(ThermTol$BodyCond)
-
-
-## Subset data
-Start <-subset(ThermTol, Trial== "Start" )
-End <-subset(ThermTol, Trial == "End" )
-StartTAF <-subset(ThermTolTAF, Trial== "Start" )
-EndTAF <-subset(ThermTolTAF, Trial == "End" )
-Limno <-subset(ThermTol, Ecotype== "Limnetic" )
-Benno <-subset(ThermTol, Ecotype== "Benthic" )
-}
+# Effect of temperature directly on condition metrics
 
 
 # Test Assumption 4 of the OCLTTH ---------------------------------------------------------
@@ -135,19 +20,21 @@ Benno <-subset(ThermTol, Ecotype== "Benthic" )
   BodyCond <- glm(BodyCond ~ AS*Ecotype, data = complete_data)
   summary(BodyCond)
 }
-#                     Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)        1.119e-03  7.364e-05  15.195   <2e-16 ***
-# AS                 6.594e-08  6.241e-08   1.057   0.2922    
-# EcotypeBenthic     2.520e-04  1.116e-04   2.259   0.0251 *  
-# AS:EcotypeBenthic -1.985e-07  1.005e-07  -1.975   0.0498 *  
+# Coefficients:
+#                       Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)        1.129e+00  6.694e-02  16.869   <2e-16 ***
+# AS                 5.803e-05  5.731e-05   1.012   0.3127    
+# EcotypeBenthic     2.435e-01  1.050e-01   2.319   0.0215 *  
+# AS:EcotypeBenthic -1.911e-04  9.429e-05  -2.026   0.0442 *  
 # 
-# Null deviance: 7.7167e-06  on 178  degrees of freedom
-# Residual deviance: 7.4709e-06  on 175  degrees of freedom
-# AIC: -2523.6
+# Null deviance: 7.9080  on 182  degrees of freedom
+# Residual deviance: 7.6525  on 179  degrees of freedom
+# AIC: -51.593
 emtrends(BodyCond, "Ecotype", var = "AS")
 # Ecotype   AS.trend       SE  df  lower.CL upper.CL
-# Limnetic  6.59e-08 6.24e-08 175 -5.72e-08 1.89e-07
-# Benthic  -1.33e-07 7.88e-08 175 -2.88e-07 2.29e-08
+# Limnetic  0.000058 5.73e-05 179 -5.51e-05 1.71e-04
+# Benthic  -0.000133 7.49e-05 179 -2.81e-04 1.47e-05
+
 plot(BodyCond)
 
 BodyCondP <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Ecotype)) +
@@ -175,19 +62,20 @@ BodyCondP
   BodyCond <- glm(BodyCond ~ Temp*Ecotype, data = complete_data)
   summary(BodyCond)
 }
-#                         Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)          1.438e-03  1.770e-04   8.123 7.87e-14 ***
-# Temp                -1.121e-05  8.063e-06  -1.390   0.1663    
-# EcotypeBenthic      -3.884e-04  2.475e-04  -1.569   0.1184    
-# Temp:EcotypeBenthic  1.973e-05  1.127e-05   1.751   0.0817 .  
+# Coefficients:
+#                       Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)          1.444126   0.176664   8.174 5.27e-14 ***
+# Temp                -0.011514   0.008057  -1.429   0.1547    
+# EcotypeBenthic      -0.377904   0.247090  -1.529   0.1279    
+# Temp:EcotypeBenthic  0.019233   0.011256   1.709   0.0893 .  
 # 
-# Null deviance: 7.7167e-06  on 178  degrees of freedom
-# Residual deviance: 7.5063e-06  on 175  degrees of freedom
-# AIC: -2522.7
+# Null deviance: 7.9080  on 182  degrees of freedom
+# Residual deviance: 7.7019  on 179  degrees of freedom
+# AIC: -50.415
 emtrends(BodyCond, "Ecotype", var = "Temp")
 # Ecotype  Temp.trend       SE  df  lower.CL upper.CL
-# Limnetic  -1.12e-05 8.06e-06 175 -2.71e-05 4.71e-06
-# Benthic    8.52e-06 7.87e-06 175 -7.01e-06 2.40e-05
+# Limnetic   -0.01151 0.00806 179 -0.02741  0.00438
+# Benthic     0.00772 0.00786 179 -0.00779  0.02323
 plot(BodyCond)
 
 BodyCond_Temps <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Ecotype)) +
@@ -203,6 +91,8 @@ BodyCond_Temps <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
   annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
 BodyCond_Temps
+
+
 
 ## End of experiment -------------------------------------------------------
 
@@ -222,41 +112,41 @@ summary(BodyCond)
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
 # AIC      BIC   logLik
-# -881.901 -866.899 447.9505
+# -13.09856 2.013624 13.54928
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)     Residual
-# StdDev: 3.327158e-05 0.0001422991
+# (Intercept) Residual
+# StdDev:   0.0330121 0.141199
 # 
 # Fixed effects:  BodyCond ~ AS * Ecotype + Sex 
-#                           Value    Std.Error DF   t-value p-value
-# (Intercept)        0.0011259256 9.411005e-05 60 11.963924  0.0000
-# AS                -0.0000001250 8.114000e-08 60 -1.540872  0.1286
-# EcotypeBenthic    -0.0001879070 1.182277e-04  3 -1.589365  0.2102
-# SexM               0.0002117219 3.605266e-05 60  5.872574  0.0000
-# AS:EcotypeBenthic  0.0000002377 1.149300e-07 60  2.068130  0.0429
+#                         Value  Std.Error DF   t-value p-value
+# (Intercept)        1.1203165 0.08080022 61 13.865266  0.0000
+# AS                -0.0001194 0.00006529 61 -1.828459  0.0724
+# EcotypeBenthic    -0.1823549 0.10777054  3 -1.692066  0.1892
+# SexM               0.2122160 0.03553555 61  5.971934  0.0000
+# AS:EcotypeBenthic  0.0002318 0.00010285 61  2.253585  0.0278
 # Correlation: 
 #   (Intr) AS     EctypB SexM  
-# AS                -0.902                     
-# EcotypeBenthic    -0.788  0.716              
-# SexM              -0.244  0.051  0.159       
-# AS:EcotypeBenthic  0.677 -0.714 -0.915 -0.200
+# AS                -0.868                     
+# EcotypeBenthic    -0.742  0.651              
+# SexM              -0.216 -0.020  0.125       
+# AS:EcotypeBenthic  0.590 -0.631 -0.898 -0.167
 # 
 # Standardized Within-Group Residuals:
 #   Min          Q1         Med          Q3         Max 
-# -2.28791591 -0.64447760  0.02848734  0.60486784  2.14653689 
+# -2.30762961 -0.62546694  0.07094707  0.60470216  2.16414472 
 # 
-# Number of Observations: 68
+# Number of Observations: 69
 # Number of Groups: 5 
 emtrends(BodyCond, "Ecotype", var = "AS")
 # Ecotype   AS.trend       SE df  lower.CL upper.CL
-# Limnetic -1.25e-07 8.11e-08 60 -2.87e-07 3.73e-08
-# Benthic   1.13e-07 8.04e-08 60 -4.82e-08 2.74e-07
+# Limnetic -0.000119 6.53e-05 61 -2.50e-04 1.12e-05
+# Benthic   0.000112 7.98e-05 61 -4.71e-05 2.72e-04
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
+# Confidence level used: 0.95  
 plot(BodyCond)
 
 BodyCond <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Ecotype)) +
@@ -292,38 +182,38 @@ summary(HSI)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC       BIC   logLik
-# -304.6516 -289.7617 159.3258
+# AIC      BIC    logLik
+# 273.1591 288.1611 -129.5796
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)   Residual
-# StdDev:  0.00729815 0.01294831
+# (Intercept) Residual
+# StdDev:   0.7689908 1.323656
 # 
 # Fixed effects:  HSI ~ AS * Ecotype + Sex 
-#                           Value   Std.Error DF   t-value p-value
-# (Intercept)         0.04074918 0.007849398 59  5.191377  0.0000
-# AS                  0.00002152 0.000007675 59  2.803981  0.0068
-# EcotypeLimnetic     0.03771250 0.012746138  3  2.958740  0.0596
-# SexM               -0.01107452 0.003385640 59 -3.271025  0.0018
-# AS:EcotypeLimnetic -0.00003312 0.000011002 59 -3.010148  0.0038
+#                         Value Std.Error DF   t-value p-value
+# (Intercept)         4.066385 0.8100735 60  5.019773  0.0000
+# AS                  0.002114 0.0007852 60  2.691964  0.0092
+# EcotypeLimnetic     2.875747 1.2332186  3  2.331904  0.1020
+# SexM               -1.032460 0.3441984 60 -2.999606  0.0039
+# AS:EcotypeLimnetic -0.002356 0.0010146 60 -2.321919  0.0236
 # Correlation: 
 #   (Intr) AS     EctypL SexM  
-# AS                 -0.769                     
-# EcotypeLimnetic    -0.613  0.523              
-# SexM               -0.017 -0.267 -0.176       
-# AS:EcotypeLimnetic  0.536 -0.711 -0.810  0.235
+# AS                 -0.763                     
+# EcotypeLimnetic    -0.654  0.543              
+# SexM               -0.016 -0.266 -0.148       
+# AS:EcotypeLimnetic  0.590 -0.775 -0.773  0.211
 # 
 # Standardized Within-Group Residuals:
 #   Min          Q1         Med          Q3         Max 
-# -1.90838381 -0.49877342 -0.09451304  0.54376505  2.28686737 
+# -1.98606855 -0.51243502 -0.03741655  0.44481887  2.28886095 
 # 
-# Number of Observations: 67
+# Number of Observations: 68
 # Number of Groups: 5 
 emtrends(HSI, "Ecotype", var = "AS")
 # Ecotype   AS.trend       SE df  lower.CL upper.CL
-# Benthic   2.15e-05 7.68e-06 59  6.16e-06 3.69e-05
-# Limnetic -1.16e-05 7.74e-06 59 -2.71e-05 3.89e-06
+# Benthic   0.002114 0.000785 60  0.000543  0.00368
+# Limnetic -0.000242 0.000641 60 -0.001524  0.00104
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
@@ -362,36 +252,36 @@ summary(GSI)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC       BIC   logLik
-# -258.0829 -249.6757 135.0415
+# AIC      BIC    logLik
+# 16.99931 25.60324 -2.499656
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)    Residual
-# StdDev: 8.352405e-08 0.001499047
+# (Intercept)  Residual
+# StdDev: 2.146464e-06 0.1478172
 # 
 # Fixed effects:  GSI ~ AS * Ecotype 
-#                             Value    Std.Error DF    t-value p-value
-# (Intercept)         0.0020993899 0.0009521355 27  2.2049278  0.0362
-# AS                 -0.0000001459 0.0000010339 27 -0.1410665  0.8889
-# EcotypeLimnetic    -0.0009548305 0.0014016259  3 -0.6812306  0.5446
-# AS:EcotypeLimnetic  0.0000017514 0.0000013985 27  1.2523923  0.2212
+#                           Value  Std.Error DF    t-value p-value
+# (Intercept)         0.20993899 0.09388760 28  2.2360674  0.0335
+# AS                 -0.00001459 0.00010195 28 -0.1430588  0.8873
+# EcotypeLimnetic    -0.11584372 0.12757515  3 -0.9080429  0.4308
+# AS:EcotypeLimnetic  0.00019803 0.00012428 28  1.5933680  0.1223
 # Correlation: 
 #   (Intr) AS     EctypL
 # AS                 -0.932              
-# EcotypeLimnetic    -0.679  0.633       
-# AS:EcotypeLimnetic  0.689 -0.739 -0.926
+# EcotypeLimnetic    -0.736  0.686       
+# AS:EcotypeLimnetic  0.765 -0.820 -0.913
 # 
 # Standardized Within-Group Residuals:
 #   Min         Q1        Med         Q3        Max 
-# -1.5571296 -0.6278084 -0.4046428  0.3139224  2.3490563 
+# -1.6542484 -0.6016640 -0.3972967  0.3082361  2.3822313 
 # 
-# Number of Observations: 34
+# Number of Observations: 35
 # Number of Groups: 5 
 emtrends(GSI, "Ecotype", var = "AS")
 #  Ecotype   AS.trend       SE df  lower.CL upper.CL
-# Benthic  -1.46e-07 1.03e-06 27 -2.27e-06 1.98e-06
-# Limnetic  1.61e-06 9.42e-07 27 -3.27e-07 3.54e-06
+# Benthic  -1.46e-05 1.02e-04 28 -2.23e-04 0.000194
+# Limnetic  1.83e-04 7.11e-05 28  3.78e-05 0.000329
 # 
 # Degrees-of-freedom method: containment 
 # Confidence level used: 0.95 
@@ -417,38 +307,42 @@ summary(SSI)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC      BIC  logLik
-# -718.5819 -703.692 366.291
+# AIC       BIC   logLik
+# -149.7611 -134.7592 81.88057
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)     Residual
-# StdDev: 2.771884e-08 0.0004769213
+# (Intercept)   Residual
+# StdDev: 1.196499e-06 0.04790254
 # 
 # Fixed effects:  SSI ~ AS * Ecotype + Sex 
-#                             Value    Std.Error DF   t-value p-value
-# (Intercept)         0.0008424243 0.0002296699 59  3.667978  0.0005
-# AS                  0.0000001752 0.0000002610 59  0.671228  0.5047
-# EcotypeLimnetic     0.0004615705 0.0003678703  3  1.254710  0.2984
-# SexM               -0.0000331179 0.0001189926 59 -0.278319  0.7817
-# AS:EcotypeLimnetic  0.0000001237 0.0000003695 59  0.334914  0.7389
+#                           Value  Std.Error DF   t-value p-value
+# (Intercept)         0.08456832 0.02306683 60  3.666231  0.0005
+# AS                  0.00001816 0.00002621 60  0.692669  0.4912
+# EcotypeLimnetic     0.06470861 0.03379753  3  1.914596  0.1514
+# SexM               -0.00487584 0.01188527 60 -0.410242  0.6831
+# AS:EcotypeLimnetic -0.00000736 0.00003354 60 -0.219519  0.8270
 # Correlation: 
 #   (Intr) AS     EctypL SexM  
-# AS                 -0.902                     
-# EcotypeLimnetic    -0.605  0.597              
-# SexM               -0.108 -0.185 -0.114       
-# AS:EcotypeLimnetic  0.636 -0.709 -0.941  0.144
+# AS                 -0.903                     
+# EcotypeLimnetic    -0.666  0.644              
+# SexM               -0.107 -0.184 -0.078       
+# AS:EcotypeLimnetic  0.709 -0.775 -0.929  0.110
 # 
 # Standardized Within-Group Residuals:
 #   Min         Q1        Med         Q3        Max 
-# -1.4439895 -0.8142956 -0.1826019  0.4147996  2.8065060 
+# -1.3125291 -0.8208460 -0.1773247  0.3707781  2.8113168 
 # 
-# Number of Observations: 67
+# Number of Observations: 68
 # Number of Groups: 5 
 emtrends(SSI, "Ecotype", var = "AS")
 # Ecotype  AS.trend       SE df  lower.CL upper.CL
-# Benthic  1.75e-07 2.61e-07 59 -3.47e-07 6.97e-07
-# Limnetic 2.99e-07 2.61e-07 59 -2.23e-07 8.21e-07
+# Benthic  1.82e-05 2.62e-05 60 -3.43e-05 7.06e-05
+# Limnetic 1.08e-05 2.12e-05 60 -3.16e-05 5.32e-05
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
 plot(SSI)
 
 SSI <- ggplot(complete_data, aes(x=AS, y=SSI, color=Ecotype)) +
@@ -478,37 +372,37 @@ summary(FibPresA)
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
 # AIC      BIC    logLik
-# 946.8562 957.7281 -468.4281
+# 973.477 984.4252 -481.7385
 # 
 # Random effects:
 #   Formula: ~1 | CCD
 # (Intercept) Residual
-# StdDev:    159.3972 291.8172
+# StdDev:     183.234 319.8836
 # 
 # Fixed effects:  AS ~ Fibrosis + Ecotype 
 #                     Value Std.Error DF   t-value p-value
-# (Intercept)      892.0897 104.62278 62  8.526725  0.0000
-# Fibrosis        -164.8308  77.66278 62 -2.122392  0.0378
-# EcotypeLimnetic  213.2639 163.32801  3  1.305740  0.2827
+# (Intercept)      901.2891  119.0035 63  7.573635  0.0000
+# Fibrosis        -202.0651   84.4671 63 -2.392234  0.0197
+# EcotypeLimnetic  258.9081  185.5241  3  1.395550  0.2572
 # Correlation: 
 #   (Intr) Fibrss
-# Fibrosis        -0.183       
-# EcotypeLimnetic -0.602 -0.094
+# Fibrosis        -0.175       
+# EcotypeLimnetic -0.608 -0.082
 # 
 # Standardized Within-Group Residuals:
-#   Min         Q1        Med         Q3        Max 
-# -2.1114594 -0.7062971  0.1603954  0.6499488  2.0581975 
+#   Min          Q1         Med          Q3         Max 
+# -1.98736249 -0.66688853  0.07106841  0.59264074  3.34260167 
 # 
-# Number of Observations: 68
+# Number of Observations: 69
 # Number of Groups: 5 
 emmeans(FibPresA, ~ Fibrosis, at = list(Fibrosis = c(0,1)))
-# Fibrosis emmean   SE df lower.CL upper.CL
-# 0    999 85.6  3      726     1271
-# 1    834 95.9  3      529     1139
+# Fibrosis emmean    SE df lower.CL upper.CL
+# 0   1031  96.7  3      723     1339
+# 1    829 108.0  3      485     1173
 # 
 # Results are averaged over the levels of: Ecotype 
 # Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
+# Confidence level used: 0.95  
 plot(FibPresA)
 
 anno <- data.frame(x1 = c(1), x2 = c(2), 
@@ -546,47 +440,47 @@ summary(FibSevA)
 # Linear mixed-effects model fit by REML
 # Data: model_data 
 # AIC      BIC    logLik
-# 950.5021 961.3741 -470.2511
+# 977.5992 988.5475 -483.7996
 # 
 # Random effects:
 #   Formula: ~1 | CCD
 # (Intercept) Residual
-# StdDev:    149.3007 298.1272
+# StdDev:    171.2687 327.9803
 # 
 # Fixed effects:  AS ~ FibrosisScore + Ecotype 
 #                     Value Std.Error DF   t-value p-value
-# (Intercept)     874.5421  99.49253 62  8.790027  0.0000
-# FibrosisScore   -59.3478  41.95387 62 -1.414595  0.1622
-# EcotypeLimnetic 202.0076 155.86288  3  1.296060  0.2857
+# (Intercept)     880.6867 112.97386 63  7.795491  0.0000
+# FibrosisScore   -75.0849  45.93739 63 -1.634505  0.1071
+# EcotypeLimnetic 247.6439 176.62582  3  1.402082  0.2554
 # Correlation: 
 #   (Intr) FbrssS
-# FibrosisScore   -0.164       
-# EcotypeLimnetic -0.606 -0.095
+# FibrosisScore   -0.158       
+# EcotypeLimnetic -0.610 -0.086
 # 
 # Standardized Within-Group Residuals:
 #   Min         Q1        Med         Q3        Max 
-# -2.0147924 -0.6506353  0.1397220  0.7102469  2.0908604 
+# -1.8881286 -0.5707999  0.1316754  0.5519239  3.4042313 
 # 
-# Number of Observations: 68
+# Number of Observations: 69
 # Number of Groups: 5 
 PermTest(FibSevA, B = 10000)
 # Monte-Carlo test
 # 
 # Call: 
-#   PermTest.lme(obj = FibSevA, B = 10000)
+# PermTest.lme(obj = FibSevA, B = 10000)
 # 
 # Based on 10000 replicates
 # Simulated p-value:
-#               p.value
-# (Intercept)    0.9926
-# FibrosisScore  0.1665
-# Ecotype        0.1671
+#   p.value
+# (Intercept)    0.9952
+# FibrosisScore  0.1074
+# Ecotype        0.1332
 emmeans(FibSevA, ~ FibrosisScore, at = list(FibrosisScore = c(0,1, 2, 3)))
 # FibrosisScore emmean    SE df lower.CL upper.CL
-# 0    976  81.1  3      717     1234
-# 1    916  79.7  3      663     1170
-# 2    857  98.2  3      544     1169
-# 3    798 128.0  3      389     1206
+# 0   1005  91.6  3      713     1296
+# 1    929  90.4  3      642     1217
+# 2    854 110.0  3      503     1205
+# 3    779 143.0  3      325     1234
 # 
 # Results are averaged over the levels of: Ecotype 
 # Degrees-of-freedom method: containment 
@@ -603,13 +497,13 @@ FibScore <- ggplot(model_data, aes(x=as.factor(FibrosisScore), y=AS, color=Ecoty
   annotate("text", x = -Inf, y = Inf, label = "F", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
 FibScore
 
-#pdf(file = "/home/ekerns/ThermTol/Figures/Figure4.pdf",
-#    width = 8,
-#    height = 8)
+pdf(file = "/home/ekerns/ThermTol/Figures/Figure4.pdf",
+   width = 8,
+   height = 8)
 
 BodyCond + HSI + GSI + SSI + FibPres + FibScore + plot_layout(ncol = 2)
 
-#dev.off()
+dev.off()
 
 
 # Scaled Mass Index -------------------------------------------------------
@@ -950,7 +844,7 @@ summary(SMI.rob)
 # StdDev:  0.09153585 0.318888
 # 
 # Fixed effects:  SMI.rob ~ AS * Ecotype + Sex 
-#                       Value  Std.Error DF   t-value p-value
+#                         Value  Std.Error DF   t-value p-value
 # (Intercept)        2.5516259 0.21631199 60 11.796045  0.0000
 # AS                -0.0002582 0.00018382 60 -1.404805  0.1652
 # EcotypeBenthic    -0.4607935 0.27208001  3 -1.693596  0.1889
@@ -975,6 +869,10 @@ slopes
 # Ecotype   AS.trend       SE df  lower.CL upper.CL
 # Limnetic -0.000258 0.000184 60 -0.000626 0.000109
 # Benthic   0.000251 0.000182 60 -0.000114 0.000616
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
 plot(SMI.rob)
 
 SMI_AS <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Ecotype)) +
@@ -1174,37 +1072,37 @@ BodyCondP + SMI_AS + BodyCond_Temps + SMI_Temp
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
 # AIC       BIC   logLik
-# -899.9137 -884.9117 456.9568
+# -30.36951 -15.25732 22.18475
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)     Residual
-# StdDev: 1.210147e-07 0.0001455592
+# (Intercept)  Residual
+# StdDev: 1.247107e-05 0.1456812
 # 
 # Fixed effects:  BodyCond ~ Temp * Ecotype + Sex 
-#                             Value    Std.Error DF   t-value p-value
-# (Intercept)          0.0012687630 0.0002881005 62  4.403890  0.0000
-# Temp                -0.0000138406 0.0000142073  1 -0.974188  0.5083
-# EcotypeBenthic      -0.0000096421 0.0003239913  1 -0.029760  0.9811
-# SexM                 0.0002195571 0.0000359801 62  6.102178  0.0000
-# Temp:EcotypeBenthic  0.0000032576 0.0000158869  1  0.205052  0.8712
+# Value Std.Error DF   t-value p-value
+# (Intercept)          1.2166471 0.2840481 63  4.283243  0.0001
+# Temp                -0.0114154 0.0140308  1 -0.813597  0.5652
+# EcotypeBenthic       0.0447920 0.3201016  1  0.139930  0.9115
+# SexM                 0.2163396 0.0358800 63  6.029532  0.0000
+# Temp:EcotypeBenthic  0.0008087 0.0157286  1  0.051417  0.9673
 # Correlation: 
 #   (Intr) Temp   EctypB SexM  
 # Temp                -0.993                     
-# EcotypeBenthic      -0.871  0.870              
-# SexM                -0.225  0.163  0.120       
-# Temp:EcotypeBenthic  0.884 -0.892 -0.993 -0.129
+# EcotypeBenthic      -0.868  0.867              
+# SexM                -0.245  0.180  0.136       
+# Temp:EcotypeBenthic  0.882 -0.889 -0.993 -0.144
 # 
 # Standardized Within-Group Residuals:
-#   Min          Q1         Med          Q3         Max 
-# -2.55321828 -0.70319956  0.09819431  0.66987611  1.97981652 
+#   Min         Q1        Med         Q3        Max 
+# -2.5413227 -0.7103753  0.1090785  0.6508564  1.9664863 
 # 
-# Number of Observations: 68
+# Number of Observations: 69
 # Number of Groups: 5 
 emtrends(BodyCond, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend       SE df  lower.CL upper.CL
-# Limnetic  -1.38e-05 1.42e-05  1 -0.000194 1.67e-04
-# Benthic   -1.06e-05 7.20e-06  1 -0.000102 8.08e-05
+#  Ecotype  Temp.trend     SE df lower.CL upper.CL
+# Limnetic    -0.0114 0.0140  1   -0.190   0.1669
+# Benthic     -0.0106 0.0072  1   -0.102   0.0809
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
@@ -1248,43 +1146,43 @@ BodyCondSex
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC       BIC   logLik
-# -322.1056 -307.2157 168.0528
+# AIC      BIC    logLik
+# 253.3334 268.3353 -119.6667
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)   Residual
-# StdDev: 5.471947e-07 0.01365051
+# (Intercept) Residual
+# StdDev:  7.6495e-05 1.374379
 # 
 # Fixed effects:  HSI ~ Temp * Ecotype + Sex 
-#                           Value   Std.Error DF   t-value p-value
-# (Intercept)           0.03863660 0.014932504 61  2.587416  0.0121
-# Temp                  0.00084609 0.000674824  1  1.253789  0.4286
-# EcotypeLimnetic      -0.07187344 0.031020703  1 -2.316951  0.2594
-# SexM                 -0.00755736 0.003421042 61 -2.209082  0.0309
-# Temp:EcotypeLimnetic  0.00404941 0.001517579  1  2.668338  0.2283
+# Value Std.Error DF   t-value p-value
+# (Intercept)           3.838724 1.5033415 62  2.553461  0.0131
+# Temp                  0.084864 0.0679432  1  1.249045  0.4298
+# EcotypeLimnetic      -6.476599 3.0789707  1 -2.103495  0.2825
+# SexM                 -0.721126 0.3434948 62 -2.099378  0.0399
+# Temp:EcotypeLimnetic  0.372908 0.1509576  1  2.470282  0.2449
 # Correlation: 
 #   (Intr) Temp   EctypL SexM  
 # Temp                 -0.981                     
-# EcotypeLimnetic      -0.444  0.464              
-# SexM                 -0.165  0.037 -0.150       
-# Temp:EcotypeLimnetic  0.408 -0.438 -0.993  0.157
+# EcotypeLimnetic      -0.448  0.470              
+# SexM                 -0.165  0.037 -0.165       
+# Temp:EcotypeLimnetic  0.411 -0.443 -0.993  0.171
 # 
 # Standardized Within-Group Residuals:
 #   Min          Q1         Med          Q3         Max 
-# -2.03678937 -0.76192305  0.02431427  0.62039089  2.65341720 
+# -2.03335112 -0.74159374  0.03331673  0.61412941  2.64946355 
 # 
-# Number of Observations: 67
+# Number of Observations: 68
 # Number of Groups: 5 
 
 emtrends(HSI, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend       SE df lower.CL upper.CL
-# Benthic    0.000846 0.000675  1 -0.00773  0.00942
-# Limnetic   0.004896 0.001360  1 -0.01244  0.02223
+#  Ecotype  Temp.trend     SE df lower.CL upper.CL
+# Benthic      0.0849 0.0679  1   -0.778    0.948
+# Limnetic     0.4578 0.1350  1   -1.262    2.177
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
+# Confidence level used: 0.95
 plot(HSI)
 
 HSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Ecotype)) +
@@ -1321,39 +1219,39 @@ HSISex
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC       BIC  logLik
-# -277.6099 -269.2028 144.805
+# AIC      BIC logLik
+# -0.6764002 7.927523 6.3382
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)    Residual
-# StdDev: 1.103456e-07 0.001518139
+# (Intercept)  Residual
+# StdDev: 1.411037e-06 0.1554069
 # 
 # Fixed effects:  GSI ~ Temp * Ecotype 
-#                             Value   Std.Error DF    t-value p-value
-# (Intercept)           0.001455470 0.002839581 29  0.5125651  0.6121
-# Temp                  0.000023353 0.000126883  1  0.1840479  0.8841
-# EcotypeLimnetic       0.006955088 0.004856772  1  1.4320392  0.3881
-# Temp:EcotypeLimnetic -0.000311165 0.000236880  1 -1.3135961  0.4142
+#                           Value Std.Error DF    t-value p-value
+# (Intercept)           0.1455470 0.2906787 30  0.5007144  0.6202
+# Temp                  0.0023353 0.0129886  1  0.1797927  0.8868
+# EcotypeLimnetic       0.8342466 0.4889402  1  1.7062345  0.3375
+# Temp:EcotypeLimnetic -0.0374228 0.0239003  1 -1.5657840  0.3618
 # Correlation: 
 #   (Intr) Temp   EctypL
 # Temp                 -0.992              
-# EcotypeLimnetic      -0.585  0.580       
-# Temp:EcotypeLimnetic  0.532 -0.536 -0.992
+# EcotypeLimnetic      -0.595  0.590       
+# Temp:EcotypeLimnetic  0.539 -0.543 -0.992
 # 
 # Standardized Within-Group Residuals:
 #   Min         Q1        Med         Q3        Max 
-# -1.4568847 -0.6731828 -0.1260429  0.3244948  2.2499836 
+# -1.5855171 -0.6474242 -0.1443792  0.5198194  2.1979631 
 # 
-# Number of Observations: 34
+# Number of Observations: 35
 # Number of Groups: 5 
 emtrends(GSI, "Ecotype", var = "Temp")
-#  Ecotype  Temp.trend       SE df lower.CL upper.CL
-# Benthic    2.34e-05 0.000127  1 -0.00159  0.00164
-# Limnetic  -2.88e-04 0.000200  1 -0.00283  0.00225
+# Ecotype  Temp.trend     SE df lower.CL upper.CL
+# Benthic     0.00234 0.0130  1   -0.163    0.167
+# Limnetic   -0.03509 0.0201  1   -0.290    0.220
 # 
 # Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
+# Confidence level used: 0.95
 plot(GSI)
 
 GSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=GSI, color=Ecotype)) +
@@ -1378,42 +1276,42 @@ GSI
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC     BIC logLik
-# -737.3199 -722.43 375.66
+# AIC       BIC   logLik
+# -169.6712 -154.6693 91.83562
 # 
 # Random effects:
 #   Formula: ~1 | CCD
-# (Intercept)     Residual
-# StdDev: 3.748528e-08 0.0004795104
+# (Intercept)   Residual
+# StdDev: 1.968078e-06 0.04786304
 # 
 # Fixed effects:  SSI ~ Temp * Ecotype + Sex 
-#                               Value    Std.Error DF    t-value p-value
-# (Intercept)           0.0010874308 0.0005333518 61  2.0388621  0.0458
-# Temp                 -0.0000043032 0.0000240878  1 -0.1786449  0.8875
-# EcotypeLimnetic       0.0014879918 0.0010740497  1  1.3854032  0.3980
-# SexM                 -0.0000411473 0.0001191858 61 -0.3452368  0.7311
-# Temp:EcotypeLimnetic -0.0000437391 0.0000525819  1 -0.8318282  0.5583
+#                             Value  Std.Error DF    t-value p-value
+# (Intercept)           0.10930271 0.05323349 62  2.0532695  0.0443
+# Temp                 -0.00043347 0.00240436  1 -0.1802853  0.8864
+# EcotypeLimnetic       0.13395066 0.10586720  1  1.2652707  0.4258
+# SexM                 -0.00500779 0.01185320 62 -0.4224843  0.6741
+# Temp:EcotypeLimnetic -0.00370565 0.00519313  1 -0.7135679  0.6054
 # Correlation: 
 #   (Intr) Temp   EctypL SexM  
 # Temp                 -0.982                     
-# EcotypeLimnetic      -0.469  0.484              
-# SexM                 -0.140  0.017 -0.131       
-# Temp:EcotypeLimnetic  0.429 -0.456 -0.993  0.138
+# EcotypeLimnetic      -0.473  0.490              
+# SexM                 -0.140  0.017 -0.147       
+# Temp:EcotypeLimnetic  0.432 -0.460 -0.993  0.153
 # 
 # Standardized Within-Group Residuals:
 #   Min         Q1        Med         Q3        Max 
-# -1.5068370 -0.7830405 -0.1569127  0.5279036  2.8039601 
+# -1.4425408 -0.8100051 -0.1601023  0.4981459  2.8172677 
 # 
-# Number of Observations: 67
+# Number of Observations: 68
 # Number of Groups: 5 
 emtrends(SSI, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend       SE df  lower.CL upper.CL
-# Benthic    -4.3e-06 2.41e-05  1 -0.000310 0.000302
-# Limnetic   -4.8e-05 4.68e-05  1 -0.000643 0.000547
+# Ecotype  Temp.trend      SE df lower.CL upper.CL
+# Benthic   -0.000433 0.00240  1  -0.0310   0.0301
+# Limnetic  -0.004139 0.00461  1  -0.0627   0.0544
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
+# Confidence level used: 0.95  
 plot(SSI)
 
 SSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=GSI, color=Ecotype)) +
@@ -1448,11 +1346,11 @@ summary <- ThermTol %>%
     max = max(BodyCond, na.rm = TRUE)
   )
 summary
-# Trial Ecotype      n    mean  median       sd        se      min     max
-# Start Benthic     86 0.00124 0.00120 0.000227 0.0000245 0.000721 0.00183
-# Start Limnetic    93 0.00119 0.00118 0.000188 0.0000195 0.000818 0.00168
-# End   Benthic     41 0.00115 0.00117 0.000187 0.0000292 0.000848 0.00155
-# End   Limnetic    27 0.00111 0.00108 0.000183 0.0000351 0.000766 0.00139
+# Trial Ecotype      n  mean median    sd     se   min   max
+# End   Benthic     41  1.15   1.17 0.187 0.0292 0.848  1.55
+# End   Limnetic    28  1.11   1.08 0.179 0.0339 0.766  1.39
+# Start Benthic     88  1.23   1.20 0.229 0.0244 0.721  1.83
+# Start Limnetic    95  1.19   1.18 0.186 0.0191 0.818  1.68
 
 BenS<- filter(Benno, Trial == "Start") 
 BenF <- filter(Benno, Trial == "End")
@@ -1461,13 +1359,13 @@ t.test(x = BenF$BodyCond, y = BenS$BodyCond, paired = FALSE)
 # Welch Two Sample t-test
 # 
 # data:  BenF$BodyCond and BenS$BodyCond
-# t = -2.1337, df = 94.168, p-value = 0.03547
+# t = -2.1228, df = 94.165, p-value = 0.03639
 # alternative hypothesis: true difference in means is not equal to 0
 # 95 percent confidence interval:
-#   -1.572244e-04 -5.657283e-06
+#   -0.156498285 -0.005231633
 # sample estimates:
-#   mean of x   mean of y 
-# 0.001153592 0.001235033 
+#   mean of x mean of y 
+# 1.153592  1.234457 
 
 LimS <- filter(Limno, Trial == "Start")
 LimF <- filter(Limno, Trial == "End")
@@ -1476,13 +1374,13 @@ t.test(x = LimF$BodyCond, y = LimS$BodyCond, paired = FALSE)
 # Welch Two Sample t-test
 # 
 # data:  LimF$BodyCond and LimS$BodyCond
-# t = -2.1562, df = 43.238, p-value = 0.03667
+# t = -2.2521, df = 45.628, p-value = 0.02918
 # alternative hypothesis: true difference in means is not equal to 0
 # 95 percent confidence interval:
-#   -1.676289e-04 -5.618064e-06
+#   -0.165960558 -0.009288293
 # sample estimates:
-#   mean of x   mean of y 
-# 0.001106821 0.001193444 
+#   mean of x mean of y 
+# 1.105866  1.193490 
 
 anno <- data.frame(x1 = c(.8), x2 = c(1.2), x3 = c(1.82), x4 = c(2.18),
                    y1 = c(.00185), y2 = c(.0019),  y3 = c(.00185), y4 = c(.0019),
@@ -1508,9 +1406,9 @@ ggplot(ThermTol, aes(x = Ecotype, y = BodyCond, color = Trial)) +
   geom_segment(data = anno, aes(x = x4, xend = x4, y = y3, yend = y4), colour = "black") +
   geom_segment(data = anno, aes(x = x3, xend = x4, y = y4, yend = y4), colour = "black")
 
-mean(BenF$BodyCond) - mean(BenS$BodyCond) # -8.144086e-05 avg lost from starting BC
-mean(LimF$BodyCond) - mean(LimS$BodyCond) # -8.662349e-05 avg lost from starting BC
+mean(BenF$BodyCond) - mean(BenS$BodyCond) # -0.08086496 avg lost from starting BC
+mean(LimF$BodyCond) - mean(LimS$BodyCond) # -0.08762443 avg lost from starting BC
 
-(mean(BenF$BodyCond) - mean(BenS$BodyCond))/mean(BenS$BodyCond) # -0.06594227 avg proportion lost from starting BC for benthic fish
+(mean(BenF$BodyCond) - mean(BenS$BodyCond))/mean(BenS$BodyCond) #-0.06550651 avg proportion lost from starting BC
 
-(mean(LimF$BodyCond) - mean(LimS$BodyCond))/mean(LimS$BodyCond) # -0.07258275 avg proportion lost from starting BC for limnetic fish
+(mean(LimF$BodyCond) - mean(LimS$BodyCond))/mean(LimS$BodyCond) # -0.07341865 avg proportion lost from starting BC
