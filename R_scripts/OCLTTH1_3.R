@@ -184,6 +184,38 @@ RMRpoint <- ggplot(Start, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
 #          hjust = 1, vjust = 0, size = 2)
 RMRpoint
 
+# What's SMR at 22C and 24C for benthic and limnetic fish?
+head(Start)
+
+RMRsummary <- Start %>%
+  dplyr::group_by(Ecotype, Temp) %>%
+  dplyr::summarise(
+    n = n(),
+    mean = mean(RMR, na.rm = TRUE),
+    median = median(RMR, na.rm = TRUE),
+    sd = sd(RMR, na.rm = TRUE),
+    se = (sd(RMR, na.rm = TRUE))/(sqrt(n())),
+    min = min(RMR, na.rm = TRUE),
+    max = max(RMR, na.rm = TRUE)
+  )
+RMRsummary
+# Ecotype   Temp     n  mean median    sd    se   min   max
+# Benthic     18    23  570.   576. 106.   22.0  336.  782.
+# Benthic     20    10  801.   802. 133.   42.0  611. 1067.
+# Benthic     22    21  733.   775. 193.   42.1  326. 1027.
+# Benthic     24    21  916.   875. 157.   34.2  689. 1219.
+# Benthic     26    13 1193.  1252. 163.   45.2  813. 1389.
+# Limnetic    18    18  503.   525. 189.   44.6  123.  847.
+# Limnetic    20    22  736.   731.  80.7  17.2  608.  922.
+# Limnetic    22    21  619.   635. 177.   38.7  196.  901.
+# Limnetic    24    21 1143.  1154. 206.   45.0  809. 1518.
+# Limnetic    26    13 1237.  1176. 204.   56.7  994. 1670.
+
+# Find percent increase of benthic between 22 and 24
+(916 - 733)/733 # 0.2496589 proportion increased between 22 and 24C
+
+# Find percent increase of limnetic between 22 and 24
+(1143-619)/619 #0.8465267 proportion incrased between 22 and 24C
 
 
 # Assumption 3 ------------------------------------------------------------
