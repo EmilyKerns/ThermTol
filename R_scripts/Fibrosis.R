@@ -18,7 +18,7 @@
 
 
 
-### No effect of temperature or temp*ecotype on fibrosis severity or propensity
+### No effect of temperature on fibrosis severity or propensity
 
 
 complete_data <- End[complete.cases(End[c("Fibrosis", "Ecotype", "CCD", "Sex")]), ]
@@ -163,6 +163,8 @@ FibSev <- ggplot(complete_data, aes(x = Temp, y = FibrosisScore, color = Ecotype
         plot.tag.position = c(0.02, .98))
 FibSev
 
+
+
 # Hypothesis 2: Resp ~ Fibrosis + Ecotype -------------------------------------------
 
 
@@ -257,6 +259,42 @@ effectsize::standardize_parameters(Fib.ecotype.temp, exp = TRUE)
 # - Response is unstandardized.
 
 
+
+MMREndQ.fibS <- lm(MMR ~ I(Temp^2) + Temp+ Ecotype + Sex + FibrosisScore, data = End)
+plot(MMREndQ.fibS)
+AIC(MMREndQ.fibS) #1037.56
+summary(MMREndQ.fibS)
+
+# Coefficients:
+#                   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     14371.697   3182.580   4.516 2.83e-05 ***
+# I(Temp^2)          28.604      6.991   4.091 0.000124 ***
+# Temp            -1226.065    301.022  -4.073 0.000132 ***
+# EcotypeLimnetic   336.360    112.736   2.984 0.004049 ** 
+# SexM               63.818    103.095   0.619 0.538136    
+# FibrosisScore    -134.977     59.248  -2.278 0.026117 *  
+# 
+# Residual standard error: 421.4 on 63 degrees of freedom
+# Multiple R-squared:  0.3007,	Adjusted R-squared:  0.2452 
+# F-statistic: 5.418 on 5 and 63 DF,  p-value: 0.0003305
+PermTest(MMREndQ.fibS, B = 10000)
+# Monte-Carlo test
+# 
+# Call: 
+#   PermTest.lm(obj = MMREndQ.fibS, B = 10000)
+# 
+# Based on 10000 replicates
+# Simulated p-value:
+#   p.value
+# I(Temp^2)      0.7265
+# Temp           0.0000
+# Ecotype        0.0099
+# Sex            0.6725
+# FibrosisScore  0.0256
+
+
+
+
 ## Assess the effects of fibrosis on SMR ----------------------------
 
 ###### Best model ######
@@ -287,6 +325,43 @@ emmeans(RMREndQ.a,~Fibrosis)
 # Confidence level used: 0.95 
 
 (574-457)/574 #0.2038328 == 20% decrease in SMR in fish that fibrosed
+
+
+
+SMREndQ.fibS <- lm(RMR ~ I(Temp^2) + Temp + Ecotype + Sex + FibrosisScore, data = End)
+plot(SMREndQ.fibS)
+AIC(SMREndQ.fibS) #896.1145
+summary(SMREndQ.fibS)
+# Residuals:
+#   Min      1Q  Median      3Q     Max 
+# -331.73  -73.10   -9.51   96.32  421.43 
+# 
+# Coefficients:
+#                 Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     5531.523   1141.939   4.844 8.63e-06 ***
+# I(Temp^2)         12.288      2.509   4.898 7.07e-06 ***
+# Temp            -494.506    108.010  -4.578 2.26e-05 ***
+# EcotypeLimnetic   71.367     40.451   1.764  0.08253 .  
+# SexM             -53.698     36.992  -1.452  0.15157    
+# FibrosisScore    -58.704     21.259  -2.761  0.00753 ** 
+# 
+# Residual standard error: 151.2 on 63 degrees of freedom
+# Multiple R-squared:  0.5061,	Adjusted R-squared:  0.4669 
+# F-statistic: 12.91 on 5 and 63 DF,  p-value: 1.185e-08
+PermTest(SMREndQ.fibS, B = 10000)
+# Monte-Carlo test
+# 
+# Call: 
+#   PermTest.lm(obj = SMREndQ.fibS, B = 10000)
+# 
+# Based on 10000 replicates
+# Simulated p-value:
+#               p.value
+# I(Temp^2)      0.0000
+# Temp           0.0000
+# Ecotype        0.1574
+# Sex            0.0959
+# FibrosisScore  0.0071
 
 
 ## Assess the effects of fibrosis on AS ----------------------------
@@ -320,6 +395,40 @@ emmeans(ASEndQ.fib,~Fibrosis)
 # Confidence level used: 0.95 
 
 (892-693)/693 #0.2871573, ~29% decrease with fibrosis
+
+
+ASEndQ.fibS <- lm(AS ~ I(Temp^2) + Temp+  Ecotype + FibrosisScore, data = End)
+plot(ASEndQ.fibS)
+AIC(ASEndQ.fibS) #1001.381
+summary(ASEndQ.fibS)
+#Residuals:
+# Min      1Q  Median      3Q     Max 
+# -602.20 -202.89   28.03  174.99 1107.67 
+# 
+# Coefficients:
+#                   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)     8909.006   2464.451   3.615 0.000592 ***
+# I(Temp^2)         16.205      5.414   2.993 0.003922 ** 
+# Temp            -729.349    233.135  -3.128 0.002645 ** 
+# EcotypeLimnetic  255.347     87.067   2.933 0.004657 ** 
+# FibrosisScore    -70.626     45.726  -1.545 0.127390    
+# 
+# Residual standard error: 326.4 on 64 degrees of freedom
+# Multiple R-squared:  0.2939,	Adjusted R-squared:  0.2497 
+# F-statistic: 6.659 on 4 and 64 DF,  p-value: 0.0001518
+PermTest(ASEndQ.fibS, B = 10000)
+# Monte-Carlo test
+# 
+# Call: 
+#   PermTest.lm(obj = ASEndQ.fibS, B = 10000)
+# 
+# Based on 10000 replicates
+# Simulated p-value:
+#               p.value
+# I(Temp^2)      0.0034
+# Temp           0.0065
+# Ecotype        0.0081
+# FibrosisScore  0.1284
 
 
 ## Make figure -------------------------------------------------------------
@@ -392,6 +501,65 @@ MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
   scale_x_discrete(labels= FibLabels) +
   labs(x = "Fibrosis", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "A")
 MMRfib
+
+
+ASfibS <- ggplot(End, aes(x = FibrosisScore, y = AS, color = Ecotype, group = Ecotype)) +
+  geom_jitter(alpha = 0.4, position = position_jitterdodge(jitter.width = 0.2, dodge.width = .5, jitter.height = .2)) +
+  stat_summary(fun = mean, geom = "point", size = 4, shape = 18,
+               position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_se,
+               geom = "errorbar", width = 0.2, linewidth = 1,
+               position = position_dodge(width = 0.5)) +
+  labs(x = "Fibrosis Score", y = "AS", tag = "F") +
+  scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
+  theme_classic()+
+  theme(plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98))
+ASfibS
+
+SMRfib <- ggplot(End, aes(x=Fibrosis, y=RMR, color=Ecotype)) +
+  geom_boxplot() +
+  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
+  theme_classic() +
+  theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98)) +
+  scale_color_manual(values = c('black', "blue")) +
+  geom_segment(aes(x = 1, xend = 2, y = max(End$RMR, na.rm=TRUE) * 1.05, 
+                   yend = max(End$RMR, na.rm=TRUE) * 1.05), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 1, xend = 1, y = max(End$RMR, na.rm=TRUE) * 1.05, 
+                   yend = max(End$RMR, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 2, xend = 2, y = max(End$RMR, na.rm=TRUE) * 1.05, 
+                   yend = max(End$RMR, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  annotate("text", x = 1.5, y = max(End$RMR, na.rm=TRUE) * 1.07, label = "*", size = 6) +
+  scale_x_discrete(labels= FibLabels) +
+  labs(x = "Fibrosis", y = expression(Standard~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "B")
+SMRfib
+
+MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
+  geom_boxplot() +
+  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
+  theme_classic() +
+  theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98))+
+  scale_color_manual(values = c('black', "blue")) +
+  geom_segment(aes(x = 1, xend = 2, y = max(End$MMR, na.rm=TRUE) * 1.05, 
+                   yend = max(End$MMR, na.rm=TRUE) * 1.05), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 1, xend = 1, y = max(End$MMR, na.rm=TRUE) * 1.05, 
+                   yend = max(End$MMR, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 2, xend = 2, y = max(End$MMR, na.rm=TRUE) * 1.05, 
+                   yend = max(End$MMR, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  annotate("text", x = 1.5, y = max(End$MMR, na.rm=TRUE) * 1.07, 
+           label = "*", size = 6) +  
+  scale_x_discrete(labels= FibLabels) +
+  labs(x = "Fibrosis", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "A")
+MMRfib
+
 
 pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure1b.pdf",
     width = 6.5, 
