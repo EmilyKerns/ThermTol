@@ -18,7 +18,7 @@
 
 
 
-### No effect of temperature on fibrosis severity or propensity
+### No effect of temperature or temp*ecotype on fibrosis severity or propensity
 
 
 complete_data <- End[complete.cases(End[c("Fibrosis", "Ecotype", "CCD", "Sex")]), ]
