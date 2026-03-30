@@ -253,6 +253,33 @@ emmeans(ASL, pairwise ~ Ecotype, var = "Temp")
 # contrast           estimate   SE  df t.ratio p.value
 # Benthic - Limnetic    -68.6 49.6 179  -1.383  0.1683
 
+ASsummary <- Start %>%
+  dplyr::group_by(Ecotype, Temp) %>%
+  dplyr::summarise(
+    n = n(),
+    mean = mean(AS, na.rm = TRUE),
+    median = median(AS, na.rm = TRUE),
+    sd = sd(AS, na.rm = TRUE),
+    se = (sd(AS, na.rm = TRUE))/(sqrt(n())),
+    min = min(AS, na.rm = TRUE),
+    max = max(AS, na.rm = TRUE)
+  )
+ASsummary
+# Ecotype   Temp     n  mean median    sd    se   min   max
+# Benthic     18    23  957.  1012.  268.  55.9 337.  1336.
+# Benthic     20    10  920.   931.  275.  87.1 574.  1503.
+# Benthic     22    21 1150.  1143.  316.  69.1 581.  1758.
+# Benthic     24    21 1055.  1074.  209.  45.6 722.  1409.
+# Benthic     26    13 1072.  1040.  399. 111.  607.  1881.
+# Limnetic    18    18 1172.  1077.  341.  80.3 574.  1768.
+# Limnetic    20    22 1059.  1001.  431.  91.9 273.  1877.
+# Limnetic    22    21 1268.  1300.  460. 100.  -38.3 1968.
+# Limnetic    24    21 1065.  1110.  225.  49.2 692.  1491.
+# Limnetic    26    13  911.   874.  240.  66.6 542.  1274.
+
+(1172 - 957)/1172 # 0.1834471 # Limnetic AS is 18.3% higher than benthic AS at 18C
+(911 - 1072)/911 # -0.1767289 # Limnetic AS is 17.7% lower than Benthic AS at 26C
+
 #quadratic interaction
 ASQ <- lm(AS ~ I(Temp^2)*Ecotype +Temp*Ecotype, data = Start)
 plot(ASQ)
