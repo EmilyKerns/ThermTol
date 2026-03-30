@@ -1367,6 +1367,31 @@ t.test(x = BenF$BodyCond, y = BenS$BodyCond, paired = FALSE)
 #   mean of x mean of y 
 # 1.153592  1.234457 
 
+# Find percent decline in BC for each ecotype
+mean(BenF$BodyCond) - mean(BenS$BodyCond) # -0.08086496 avg lost from starting BC benthic
+mean(LimF$BodyCond) - mean(LimS$BodyCond) # -0.08762443 avg lost from starting BC limnetic
+
+(mean(BenF$BodyCond) - mean(BenS$BodyCond))/mean(BenS$BodyCond) #-0.06550651 avg proportion lost from starting BC benthic
+
+(mean(LimF$BodyCond) - mean(LimS$BodyCond))/mean(LimS$BodyCond) # -0.07341865 avg proportion lost from starting BC limnetic
+
+# find 95% CI of avg proportion lost between start and end BC
+# benthic
+mean(BenS$BodyCond) - 0.156498285 #1.077959 
+(1.077959 - mean(BenS$BodyCond))/mean(BenS$BodyCond) # -0.1267747
+
+mean(BenS$BodyCond) - 0.005231633 #1.229225
+(1.229225 - mean(BenS$BodyCond))/mean(BenS$BodyCond) # -0.004238225
+
+# limnetic
+mean(LimS$BodyCond) - 0.165960558 #1.027529
+(1.027529 - mean(LimS$BodyCond))/mean(LimS$BodyCond) # -0.1390552
+
+mean(LimS$BodyCond) - 0.009288293 #1.184202
+(1.184202 - mean(LimS$BodyCond))/mean(LimS$BodyCond) # -0.007782182
+
+# Visualize
+
 LimS <- filter(Limno, Trial == "Start")
 LimF <- filter(Limno, Trial == "End")
 
@@ -1405,10 +1430,3 @@ ggplot(ThermTol, aes(x = Ecotype, y = BodyCond, color = Trial)) +
   geom_segment(data = anno, aes(x = x3, xend = x3, y = y3, yend = y4), colour = "black") +
   geom_segment(data = anno, aes(x = x4, xend = x4, y = y3, yend = y4), colour = "black") +
   geom_segment(data = anno, aes(x = x3, xend = x4, y = y4, yend = y4), colour = "black")
-
-mean(BenF$BodyCond) - mean(BenS$BodyCond) # -0.08086496 avg lost from starting BC
-mean(LimF$BodyCond) - mean(LimS$BodyCond) # -0.08762443 avg lost from starting BC
-
-(mean(BenF$BodyCond) - mean(BenS$BodyCond))/mean(BenS$BodyCond) #-0.06550651 avg proportion lost from starting BC
-
-(mean(LimF$BodyCond) - mean(LimS$BodyCond))/mean(LimS$BodyCond) # -0.07341865 avg proportion lost from starting BC
