@@ -1,8 +1,5 @@
-# Mortality
-# Figure 2
-
 ######### Load Packages #########
-library(car)
+{
 library(ggplot2)
 library(MASS)
 library(rstatix)
@@ -21,10 +18,12 @@ library(ggfortify)
 library(survival)
 library(survminer)
 library(ggsurvfit)
+}
 
 # import data
-Survival <- read_xlsx("R:/ThermTol_MultStress/Sasser_Ch3/Ch3/ThermalToleranceProject_SuspectDataRemoved.xlsx", sheet = "Survival")
-head(Survival)
+setwd("/home/ekerns/ThermTol/RawData")
+
+Survival <- read_xlsx("ThermalToleranceProject_SuspectDataRemoved.xlsx", sheet = "Survival")
 
 # covert to factors
 Survival$Ecotype <- factor(Survival$Ecotype, 
@@ -84,7 +83,7 @@ Eco.cox
 ET.cox <- coxph(Surv(Time, Status) ~ Ecotype*Temp, data = Survival)
 ET.cox
 
-# coef  exp(coef)   se(coef)      z      p
+#                         coef  exp(coef)   se(coef)      z      p
 # EcotypeLimnetic      -7.1193092  0.0008093  4.3218498 -1.647 0.0995
 # Temp                  0.2757683  1.3175425  0.1318690  2.091 0.0365
 # EcotypeLimnetic:Temp  0.3476727  1.4157688  0.1783450  1.949 0.0512
@@ -115,29 +114,35 @@ dev.off()
 # benthic
 p1 <- survfit2(Surv(Time, Status) ~ Temp, data = SurvBen) |>
   ggsurvfit(linewidth = 1) +
-  scale_color_manual(values = c('dodgerblue4','deepskyblue','forestgreen', 'darkorange','#F00505')) +
+  scale_color_manual(values = c('dodgerblue4','deepskyblue','forestgreen', 'darkorange','#F00505'), 
+                     name = "Temperature (\u00B0)") +
   scale_ggsurvfit() +
-  theme_classic(base_size = 20) +
-  labs(title = "A",
-    y = "Percentage survival",
-    x = "Time (days)"
-  )+
-  add_legend_title("Temperature") +
-  theme(legend.position = "bottom") 
+  theme_classic(base_size = 12) +
+  labs(y = "Percentage survival",
+       x = "Time (days)",
+       title = "")+
+  theme(plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98), 
+        legend.position = "none",
+        legend.text = element_text(size = 12)) +
+  labs(tag = "A")
 p1
 
 #Limnetic
 p2 <- survfit2(Surv(Time, Status) ~ Temp, data = SurvLim) |>
   ggsurvfit(linewidth = 1) +
-  scale_color_manual(values = c('dodgerblue4','deepskyblue','forestgreen', 'darkorange','#F00505')) +
+  scale_color_manual(values = c('dodgerblue4','deepskyblue','forestgreen', 'darkorange','#F00505'), 
+                     name = "Temperature (\u00B0)") +
   scale_ggsurvfit() +
-  theme_classic(base_size = 20) +
-  labs(title = "B",
-       y = "Percentage survival",
-       x = "Time (days)"
-  )+
-  add_legend_title("Temperature") +
-  theme(legend.position = "bottom") 
+  theme_classic(base_size = 12) +
+  labs(y = "Percentage survival",
+       x = "Time (days)",
+       title = "")+
+  theme(plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98), 
+        legend.position = "right",
+        legend.text = element_text(size = 12)) +
+  labs(tag = "B")
 p2
 
 #Print
