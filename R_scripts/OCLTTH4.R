@@ -98,7 +98,7 @@ BodyCond_Temps
 
 
 
-###### Does AS influence performance metrics? Body Condition, HSI, GSI, SSI, fibrosis? Use tank density as a random effect. CCD = cumulative competitor days (i.e. density)
+###### Does AS influence performance metrics? Body Condition, HSI, GSI, SSI? Use tank density as a random effect. CCD = cumulative competitor days (i.e. density)
 {
 complete_data <- End[complete.cases(End[c("BodyCond", "AS", "Ecotype", "CCD", "Sex")]), ]
 nrow(complete_data)
@@ -354,82 +354,6 @@ SSI <- ggplot(complete_data, aes(x=AS, y=SSI, color=Ecotype)) +
   labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(SSI))+
   annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
 SSI
-
-{
-End <- End %>% 
-  mutate(
-    Fibrosis = case_when(
-      Fibrosis == "Y" ~ 1,
-      Fibrosis == "N" ~ 0,
-      TRUE ~ NA_real_))
-
-complete_data <- End[complete.cases(End[c("Fibrosis", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data) #68
-
-FibPresA <- lme(AS ~ Fibrosis + Ecotype, random = ~ 1 | CCD, data = complete_data)
-summary(FibPresA)
-}
-# Linear mixed-effects model fit by REML
-# Data: complete_data 
-# AIC      BIC    logLik
-# 973.477 984.4252 -481.7385
-# 
-# Random effects:
-#   Formula: ~1 | CCD
-# (Intercept) Residual
-# StdDev:     183.234 319.8836
-# 
-# Fixed effects:  AS ~ Fibrosis + Ecotype 
-#                     Value Std.Error DF   t-value p-value
-# (Intercept)      901.2891  119.0035 63  7.573635  0.0000
-# Fibrosis        -202.0651   84.4671 63 -2.392234  0.0197
-# EcotypeLimnetic  258.9081  185.5241  3  1.395550  0.2572
-# Correlation: 
-#   (Intr) Fibrss
-# Fibrosis        -0.175       
-# EcotypeLimnetic -0.608 -0.082
-# 
-# Standardized Within-Group Residuals:
-#   Min          Q1         Med          Q3         Max 
-# -1.98736249 -0.66688853  0.07106841  0.59264074  3.34260167 
-# 
-# Number of Observations: 69
-# Number of Groups: 5 
-emmeans(FibPresA, ~ Fibrosis, at = list(Fibrosis = c(0,1)))
-# Fibrosis emmean    SE df lower.CL upper.CL
-# 0   1031  96.7  3      723     1339
-# 1    829 108.0  3      485     1173
-# 
-# Results are averaged over the levels of: Ecotype 
-# Degrees-of-freedom method: containment 
-# Confidence level used: 0.95  
-plot(FibPresA)
-
-anno <- data.frame(x1 = c(1), x2 = c(2), 
-                   y1 = c(2400), y2 = c(2500), 
-                   xstar = c(1.5), ystar = c(2560),
-                   lab = c("p<0.05"),
-                   Ecotype = c("Benthic"))
-anno
-
-
-FibPres <- ggplot(complete_data, aes(x = factor(Fibrosis), y = AS, color = Ecotype)) +
-  geom_boxplot(size = 0.5, width = 0.5, position = position_dodge(0.75)) +
-  geom_jitter(aes(color = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.75), 
-              size = 1, alpha = 0.2) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  scale_color_manual(values = c('black', 'blue')) +
-  scale_x_discrete(labels = c("Absent", "Present")) +
-  labs(x = expression(Fibrosis), y = expression(Aerobic~Scope~(mgO[2]/kg/hr))) +
-  geom_text(data = anno, aes(x = xstar, y = ystar, label = lab), size = 2, fontface = "bold") +
-  geom_segment(data = anno, aes(x = x1, xend = x1, y = y1, yend = y2), colour = "black") +
-  geom_segment(data = anno, aes(x = x2, xend = x2, y = y1, yend = y2), colour = "black") +
-  geom_segment(data = anno, aes(x = x1, xend = x2, y = y2, yend = y2), colour = "black") +
-  annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-FibPres
-
 {
 model_data <- End %>%
   filter(!is.na(FibrosisScore), !is.na(AS), !is.na(Ecotype), !is.na(CCD))
