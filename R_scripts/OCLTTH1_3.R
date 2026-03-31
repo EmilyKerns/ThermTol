@@ -184,6 +184,7 @@ RMRpoint <- ggplot(Start, aes(x=as.factor(Temp), y=RMR, color=Ecotype)) +
 #          hjust = 1, vjust = 0, size = 2)
 RMRpoint
 
+
 # What's SMR at 22C and 24C for benthic and limnetic fish?
 head(Start)
 
@@ -216,7 +217,6 @@ RMRsummary
 
 # Find percent increase of limnetic between 22 and 24
 (1143-619)/619 #0.8465267 proportion incrased between 22 and 24C
-
 
 # Assumption 3 ------------------------------------------------------------
 #At high temp AS will decrease.
@@ -277,8 +277,49 @@ ASsummary
 # Limnetic    24    21 1065.  1110.  225.  49.2 692.  1491.
 # Limnetic    26    13  911.   874.  240.  66.6 542.  1274.
 
-(1172 - 957)/1172 # 0.1834471 # Limnetic AS is 18.3% higher than benthic AS at 18C
-(911 - 1072)/911 # -0.1767289 # Limnetic AS is 17.7% lower than Benthic AS at 26C
+(1172 - 957)/1172 # 0.1834471
+(911 - 1072)/911 # -0.1767289
+
+(1268-911)/1268 #0.2815457
+(1150-1072)/1150 #0.06782609
+
+BenASsummary <- Benno %>%
+  dplyr::group_by(Pop, Trial) %>%
+  dplyr::summarise(
+    n = n(),
+    mean = mean(AS, na.rm = TRUE),
+    median = median(AS, na.rm = TRUE),
+    sd = sd(AS, na.rm = TRUE),
+    se = (sd(AS, na.rm = TRUE))/(sqrt(n())),
+    min = min(AS, na.rm = TRUE),
+    max = max(AS, na.rm = TRUE)
+  )
+BenASsummary
+# Pop   Trial     n  mean median    sd    se   min   max
+# FG    Start    26  986.   954.  221.  43.4  581. 1503.
+# WT    End      41  850.   813.  300.  46.9  297. 1514.
+# WT    Start    62 1061.  1085.  321.  40.8  337. 1881.
+
+(1061-850)/1061 #0.198869
+
+LimASsummary <- Limno %>%
+  dplyr::group_by(Pop, Trial) %>%
+  dplyr::summarise(
+    n = n(),
+    mean = mean(AS, na.rm = TRUE),
+    median = median(AS, na.rm = TRUE),
+    sd = sd(AS, na.rm = TRUE),
+    se = (sd(AS, na.rm = TRUE))/(sqrt(n())),
+    min = min(AS, na.rm = TRUE),
+    max = max(AS, na.rm = TRUE)
+  )
+LimASsummary
+# Pop   Trial     n  mean median    sd    se   min   max
+# SL    End      28 1085.  1090.  436.  82.3 314.  2394.
+# SL    Start    65 1051.  1052.  350.  43.5 -38.3 1768.
+# WK    Start    30 1230.  1189.  394.  71.9 546.  1968.
+
+(1051-1085)/1051 #0.03235014
 
 #quadratic interaction
 ASQ <- lm(AS ~ I(Temp^2)*Ecotype +Temp*Ecotype, data = Start)
@@ -443,99 +484,6 @@ MMRSex
 
 
 
-# Assess the effects of fibrosis on MMR ----------------------------
-
-###### Best model ######
-# Add fibrosis to the best model for MMR
-MMREndQ.fib <- lm(MMR ~ I(Temp^2) +Temp + Ecotype + Sex + Fibrosis, data = End)
-plot(MMREndQ.fib)
-AIC(MMREndQ.fib) #1033.849
-summary(MMREndQ.fib)
-# Call:
-#   lm(formula = MMR ~ I(Temp^2) + Temp + Ecotype + Sex + Fibrosis, 
-#      data = End)
-# 
-# Residuals:
-#   Min      1Q  Median      3Q     Max 
-# -944.07 -255.32   33.62  244.24 1305.26 
-# 
-# Coefficients:
-#                   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)     15246.772   3088.403   4.937 6.14e-06 ***
-# I(Temp^2)          30.419      6.785   4.483 3.17e-05 ***
-# Temp            -1305.376    292.022  -4.470 3.33e-05 ***
-# EcotypeLimnetic   356.246    110.204   3.233  0.00195 ** 
-# SexM               63.501    100.217   0.634  0.52862    
-# FibrosisY        -324.169    108.315  -2.993  0.00394 ** 
-# 
-# Residual standard error: 410.2 on 63 degrees of freedom
-# Multiple R-squared:  0.3373,	Adjusted R-squared:  0.2847 
-# F-statistic: 6.413 on 5 and 63 DF,  p-value: 7.104e-05
-
-# what is the effect of fibrosis on MMR at the end of the experiment?
-emmeans(MMREndQ.fib,~Fibrosis)
-# Fibrosis emmean    SE df lower.CL upper.CL
-# N          1461  81.9 63     1298     1625
-# Y          1137 104.0 63      929     1346
-# 
-# Results are averaged over the levels of: Ecotype, Sex 
-# Confidence level used: 0.95 
-
-(1461-1137)/1461 #0.2217659 == 22% decrease in MMR in fish that fibrosed
-
-# Did one ecotype fibrose more often than another?
-#Use full dataset. Some fish may have been excluded earlier, but their fibrosis data still addresses ecotype differences
-Fib.data <- read_xlsx('/home/ekerns/ThermTol/RawData/ThermalToleranceProject_OG.xlsx')
-Fib.data <- Fib.data[!is.na(Fib.data$Fibrosis),]
-
-Fib.data <- Fib.data %>%
-  mutate(
-    Fibrosis = case_when(
-      Fibrosis == "Y" ~ "1",
-      Fibrosis == "N" ~ "0",
-      TRUE ~ "Yer missing something"  # A default value if none of the conditions match
-    )
-  ) 
-Fib.data$Fibrosis <- as.numeric(Fib.data$Fibrosis)
-
-#Did Fibrosis rates increase with temp and vary by ecotype?
-Fib.ecotype.temp <- glm(Fibrosis ~ Ecotype + Temp,family = "binomial", data = Fib.data)
-summary(Fib.ecotype.temp)
-#No effect of temp
-
-# Did fibrosis rates vary by ecotype?
-Fib.ecotype <- glm(Fibrosis ~ Ecotype,family = "binomial", data = Fib.data)
-summary(Fib.ecotype)
-#                 Estimate Std. Error z value Pr(>|z|)   
-# (Intercept)      -0.5878     0.2108  -2.788   0.0053 **
-# EcotypeLimnetic   0.5351     0.3116   1.717   0.0859 . 
-# 
-# Null deviance: 236.02  on 173  degrees of freedom
-# Residual deviance: 233.05  on 172  degrees of freedom
-# AIC: 237.05
-
-
-emmeans(Fib.ecotype,~Ecotype)
-# Ecotype   emmean    SE  df asymp.LCL asymp.UCL
-# Benthic  -0.5878 0.211 Inf    -1.001    -0.175
-# Limnetic -0.0526 0.229 Inf    -0.502     0.397
-# 
-# Results are given on the logit (not the response) scale. 
-# Confidence level used: 0.95
-
-exp(-0.5878) / (1 + exp(-0.5878)) #0.3571398 = Benthic fibrosis rate
-exp(-0.0526) / (1 + exp(-0.0526)) #0.486853 = Limnetic fibrosis rate
-
-effectsize::standardize_parameters(Fib.ecotype, exp = TRUE)
-# # Standardization method: refit
-# 
-# Parameter          | Std_Odds_Ratio |       95% CI
-# --------------------------------------------------
-# (Intercept)        |           0.56 | [0.36, 0.83]
-# Ecotype [Limnetic] |           1.71 | [0.93, 3.16]
-#
-# - Response is unstandardized.
-
 
 
 # Assumption 2 ------------------------------------------------------------
@@ -657,7 +605,7 @@ summary(ASEndQ.a)
 
 ###### Best model ######
 # test quadratic additive, no sex.
-ASEndQ.a.noSex <- lm(AS ~ I(Temp^2) + Temp+  Ecotype, data = End)
+ASEndQ.a.noSex <- lm(AS ~ I(Temp^2) + Temp +  Ecotype, data = End)
 plot(ASEndQ.a.noSex)
 AIC(ASEndQ.a.noSex) #1001.906
 summary(ASEndQ.a.noSex)
@@ -722,139 +670,11 @@ ASSex
 
 
 
-# Assess the effects of fibrosis on AS ----------------------------
-
-# Add fibrosis to the best model
-ASEndQ.fib <- lm(AS ~ I(Temp^2) + Temp+  Ecotype + Fibrosis, data = End)
-plot(ASEndQ.fib)
-AIC(ASEndQ.fib) # 998.106
-summary(ASEndQ.fib)
-# Residuals:
-#   Min      1Q  Median      3Q     Max 
-# -629.39 -218.70   14.45  181.09 1066.24 
-# 
-# Coefficients:
-#                 Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)      9391.38    2399.38   3.914 0.000223 ***
-# I(Temp^2)          17.20       5.27   3.263 0.001770 ** 
-# Temp             -772.61     226.86  -3.406 0.001144 ** 
-# EcotypeLimnetic   271.49      85.39   3.179 0.002276 ** 
-# Fibrosis         -198.96      83.98  -2.369 0.020860 *  
-# 
-# Residual standard error: 318.7 on 64 degrees of freedom
-# Multiple R-squared:  0.3266,	Adjusted R-squared:  0.2845 
-# F-statistic:  7.76 on 4 and 64 DF,  p-value: 3.659e-05
-
-emmeans(ASEndQ.fib,~Fibrosis)
-# Fibrosis emmean   SE df lower.CL upper.CL
-# 0    892 63.6 64      765     1019
-# 1    693 80.7 64      532      854
-# 
-# Results are averaged over the levels of: Ecotype 
-# Confidence level used: 0.95 
-
-(892-693)/693 #0.2871573, ~29% decrease with fibrosis
-
-End$Fibrosis <- as.factor(End$Fibrosis)
-End$Fibrosis
-ASfib <- ggplot(End, aes(x=factor(Temp), y=AS, color=Fibrosis)) +
-  geom_point(aes(shape=Ecotype, group=interaction(Fibrosis, Ecotype)),
-             position = position_jitterdodge(jitter.width = 0.5, jitter.height = 0.0001, dodge.width = .5), 
-             size = 3, alpha = 0.2) +
-  theme_classic() +
-  scale_color_manual(values = c('black', "blue"), labels = c("Absent", "Present")) +
-  labs(x = expression("Temperature"*degree*C), y = expression(Aerobic~Scope~(mgO[2]/kg/hr))) +
-  stat_summary(aes(shape=Ecotype, group=interaction(Fibrosis, Ecotype)),
-               fun = mean, na.rm = TRUE, 
-               geom = "point",
-               size = 3, 
-               position = position_dodge(width = 0.5)) +
-  stat_summary(aes(group=interaction(Fibrosis, Ecotype)),
-               fun.data = mean_se, na.rm = TRUE,
-               geom = "errorbar", width = .3,
-               position = position_dodge(width = 0.5)) +
-  stat_smooth(aes(x = as.numeric(factor(Temp)), group=Fibrosis), 
-              method = "lm", 
-              formula = y ~ poly(x, 2, raw = TRUE), 
-              linewidth = 1, se = TRUE, alpha = .1)  
-ASfib
-
-ASfib <- ggplot(End, aes(x=Fibrosis, y=AS, color=Fibrosis)) +
-  geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitter(0.2)) +
-  theme_classic() +
-  scale_color_manual(values = c('black', "blue")) +
-  labs(x = "Fibrosis", y = expression(Aerobic~Scope~(mgO[2]/kg/hr)))
-ASfib
-
-FibLabels <- c("Absent", "Present")
-
-ASfib <- ggplot(End, aes(x=Fibrosis, y=AS, color=Ecotype)) +
-  geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
-  scale_color_manual(values = c('black', "blue")) +
-  geom_segment(aes(x = 1, xend = 2, y = max(End$AS, na.rm=TRUE) * 1.05, 
-                   yend = max(End$AS, na.rm=TRUE) * 1.05), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 1, xend = 1, y = max(End$AS, na.rm=TRUE) * 1.05, 
-                   yend = max(End$AS, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 2, xend = 2, y = max(End$AS, na.rm=TRUE) * 1.05, 
-                   yend = max(End$AS, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  annotate("text", x = 1.5, y = max(End$AS, na.rm=TRUE) * 1.07, label = "*", size = 6) +
-  scale_x_discrete(labels= FibLabels) +
-  labs(x = "Fibrosis", y = expression(Aerobic~Scope~(mgO[2]/kg/hr)))
-ASfib
-
-SMRfib <- ggplot(End, aes(x=Fibrosis, y=RMR, color=Ecotype)) +
-  geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  scale_color_manual(values = c('black', "blue")) +
-  geom_segment(aes(x = 1, xend = 2, y = max(End$RMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$RMR, na.rm=TRUE) * 1.05), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 1, xend = 1, y = max(End$RMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$RMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 2, xend = 2, y = max(End$RMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$RMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  annotate("text", x = 1.5, y = max(End$RMR, na.rm=TRUE) * 1.07, label = "*", size = 6) +
-  scale_x_discrete(labels= FibLabels) +
-  labs(x = "Fibrosis", y = expression(Standard~Metabolic~Rate~(mgO[2]/kg/hr)))
-SMRfib
-
-MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
-  geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
-  theme(legend.position = "none")+
-  scale_color_manual(values = c('black', "blue")) +
-  geom_segment(aes(x = 1, xend = 2, y = max(End$MMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$MMR, na.rm=TRUE) * 1.05), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 1, xend = 1, y = max(End$MMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$MMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 2, xend = 2, y = max(End$MMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$MMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  annotate("text", x = 1.5, y = max(End$MMR, na.rm=TRUE) * 1.07, 
-           label = "*", size = 6) +  
-  scale_x_discrete(labels= FibLabels) +
-  labs(x = "Fibrosis", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)))
-MMRfib
-
-
 # Make figure -------------------------------------------------------------
 
 
 
-pdf(file = "/home/ekerns/ThermTol/Figures/Figure3Q.pdf",
+pdf(file = "Figure3Q.pdf",
     width = 7,
     height = 6.25)
 
@@ -862,37 +682,9 @@ MMRpoint + RMRpoint + ASpoint + MMREnd + RMREnd + ASEnd
 
 dev.off()
 
-pdf(file = "/home/ekerns/ThermTol/Figures/Figure3L.pdf",
+pdf(file = "Figure3L.pdf",
     width = 7,
     height = 6.25)
 
 MMRpoint + RMRpoint + ASpointL + MMREnd + RMREnd + ASEnd
-
-dev.off()
-
-pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure2.pdf",
-    width = 6.6, 
-    height = 4)
-
-MMRSex + RMRSex + ASSex
-
-dev.off()
-
-pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure1.pdf",
-    width = 6.5, 
-    height = 4)
-
-MMRSApoint + RMRSApoint + ASSApoint
-
-dev.off()
-
-pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure1b.pdf",
-    width = 6.5, 
-    height = 4)
-
-MMRfib+ SMRfib + ASfib 
-
-dev.off()
-
-
 
