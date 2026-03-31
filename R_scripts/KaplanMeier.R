@@ -1,3 +1,5 @@
+### Figure 2
+
 ######### Load Packages #########
 {
 library(ggplot2)
@@ -21,7 +23,7 @@ library(ggsurvfit)
 }
 
 # import data
-setwd("/home/ekerns/ThermTol/RawData")
+setwd("ThermTol/RawData")
 
 Survival <- read_xlsx("ThermalToleranceProject_SuspectDataRemoved.xlsx", sheet = "Survival")
 
@@ -214,4 +216,3 @@ E26 <- survfit(surv_26 ~ Ecotype, data = Surv26)
 summary(E26)
 
 ggsurvplot(E26, data = Surv26, pval = TRUE)
-
