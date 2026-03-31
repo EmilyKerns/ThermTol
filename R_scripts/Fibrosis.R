@@ -18,7 +18,7 @@
 
 
 
-### No effect of temperature on fibrosis severity or propensity
+### No effect of temperature on fibrosis severity or propensity for either ecotype
 
 
 complete_data <- End[complete.cases(End[c("Fibrosis", "Ecotype", "CCD", "Sex")]), ]
@@ -85,7 +85,8 @@ FibPres <- ggplot(plot_data, aes(x = Temp_num, y = Fibrosis_num, color = Ecotype
   scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
   theme_classic()+
   theme(plot.tag = element_text(size = 15, face = "bold"),
-        plot.tag.position = c(0.02, .98))
+        plot.tag.position = c(0.02, .98),
+        legend.position = "none")
 FibPres
 
 complete_data <- End2[complete.cases(End2[c("Ecotype", "CCD", "Sex", "FibrosisScore", "Temp")]), ]
@@ -165,9 +166,10 @@ FibSev
 
 
 
+
 # Hypothesis 2: Resp ~ Fibrosis + Ecotype -------------------------------------------
 
-
+### Both fibrosis presence and severity affect SMR, MMR, and AS
 
 ## Assess the effects of fibrosis on MMR ----------------------------
 
@@ -502,66 +504,51 @@ MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
   labs(x = "Fibrosis", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "A")
 MMRfib
 
-
-ASfibS <- ggplot(End, aes(x = FibrosisScore, y = AS, color = Ecotype, group = Ecotype)) +
+MMRFibSev <- ggplot(End, aes(x = FibrosisScore, y = MMR, color = Ecotype, group = Ecotype)) +
   geom_jitter(alpha = 0.4, position = position_jitterdodge(jitter.width = 0.2, dodge.width = .5, jitter.height = .2)) +
   stat_summary(fun = mean, geom = "point", size = 4, shape = 18,
                position = position_dodge(width = 0.5)) +
   stat_summary(fun.data = mean_se,
                geom = "errorbar", width = 0.2, linewidth = 1,
                position = position_dodge(width = 0.5)) +
-  labs(x = "Fibrosis Score", y = "AS", tag = "F") +
+  labs(x = "Fibrosis Score", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "A") +
+  scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
+  theme_classic()+
+  theme(plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98), 
+        legend.position = "none")
+MMRFibSev
+
+SMRFibSev <- ggplot(End, aes(x = FibrosisScore, y = RMR, color = Ecotype, group = Ecotype)) +
+  geom_jitter(alpha = 0.4, position = position_jitterdodge(jitter.width = 0.2, dodge.width = .5, jitter.height = .2)) +
+  stat_summary(fun = mean, geom = "point", size = 4, shape = 18,
+               position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_se,
+               geom = "errorbar", width = 0.2, linewidth = 1,
+               position = position_dodge(width = 0.5)) +
+  labs(x = "Fibrosis Score", y = expression(Standard~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "B") +
+  scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
+  theme_classic()+
+  theme(plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98),
+        legend.position = "none")
+SMRFibSev
+
+ASFibSev <- ggplot(End, aes(x = FibrosisScore, y = AS, color = Ecotype, group = Ecotype)) +
+  geom_jitter(alpha = 0.4, position = position_jitterdodge(jitter.width = 0.2, dodge.width = .5, jitter.height = .2)) +
+  stat_summary(fun = mean, geom = "point", size = 4, shape = 18,
+               position = position_dodge(width = 0.5)) +
+  stat_summary(fun.data = mean_se,
+               geom = "errorbar", width = 0.2, linewidth = 1,
+               position = position_dodge(width = 0.5)) +
+  labs(x = "Fibrosis Score", y = expression(Aerobic~Scope~(mgO[2]/kg/hr)), tag = "C") +
   scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
   theme_classic()+
   theme(plot.tag = element_text(size = 15, face = "bold"),
         plot.tag.position = c(0.02, .98))
-ASfibS
+ASFibSev
 
-SMRfib <- ggplot(End, aes(x=Fibrosis, y=RMR, color=Ecotype)) +
-  geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
-  theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
-        plot.tag.position = c(0.02, .98)) +
-  scale_color_manual(values = c('black', "blue")) +
-  geom_segment(aes(x = 1, xend = 2, y = max(End$RMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$RMR, na.rm=TRUE) * 1.05), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 1, xend = 1, y = max(End$RMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$RMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 2, xend = 2, y = max(End$RMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$RMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  annotate("text", x = 1.5, y = max(End$RMR, na.rm=TRUE) * 1.07, label = "*", size = 6) +
-  scale_x_discrete(labels= FibLabels) +
-  labs(x = "Fibrosis", y = expression(Standard~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "B")
-SMRfib
-
-MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
-  geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
-  theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
-        plot.tag.position = c(0.02, .98))+
-  scale_color_manual(values = c('black', "blue")) +
-  geom_segment(aes(x = 1, xend = 2, y = max(End$MMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$MMR, na.rm=TRUE) * 1.05), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 1, xend = 1, y = max(End$MMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$MMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 2, xend = 2, y = max(End$MMR, na.rm=TRUE) * 1.05, 
-                   yend = max(End$MMR, na.rm=TRUE) * 1.03), 
-               color = "black", inherit.aes = FALSE) +
-  annotate("text", x = 1.5, y = max(End$MMR, na.rm=TRUE) * 1.07, 
-           label = "*", size = 6) +  
-  scale_x_discrete(labels= FibLabels) +
-  labs(x = "Fibrosis", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "A")
-MMRfib
-
-
-pdf(file = "/home/ekerns/ThermTol/Figures/SuppFigure1b.pdf",
+pdf(file = "NewFig4.pdf",
     width = 6.5, 
     height = 4)
 
@@ -569,7 +556,14 @@ MMRfib+ SMRfib + ASfib
 
 dev.off()
 
+pdf(file = "NewSuppFig4.pdf",
+    width = 6.5, 
+    height = 4)
 
+MMRFibSev + SMRFibSev + ASFibSev
+
+dev.off()
+http://144.92.58.154:8787/graphics/00173552-221d-4853-a3b3-2f65d9f85915.png
 # Hypothesis 2: BC ~ Fibrosis ---------------------------------------------
 
 BCEnd.fib.q.i <- lm(BodyCond ~ I(Temp^2)*Ecotype*Fibrosis + Temp*Ecotype*Fibrosis + Sex, data = End)
