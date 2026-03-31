@@ -1,5 +1,5 @@
 # Testing OCLTTH Predictions 1-3 at the start & end of the experiment
-# Supplemental Figure 1
+# Figure 3, Supplemental Figures 1 & 2
 #By Lake attribute
 
 # Test the OCLTTH ---------------------------------------------------------
