@@ -147,8 +147,10 @@ pairs(slopes)
 # P value adjustment: tukey method for comparing a family of 4 estimates 
 plot(BodyCond)
 
-BodyCondPops <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Pop)) +
-  geom_point(size = 0.5) +
+BodyCondPopsTemp <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
   theme_classic() +
   theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
@@ -157,7 +159,7 @@ BodyCondPops <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Pop)) +
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "A", 
            hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-BodyCondPops
+BodyCondPopsTemp
 
 #### Does temperature influence Fulton's K Body Condition (by population)? ------------------
 {
@@ -216,7 +218,7 @@ BodyCond_TempsPop <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, co
   labs(x = "Temperature (\u00B0C)", 
        y = "Experiment Start Body Condition")+
   geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
-  annotate("text", x = -Inf, y = Inf, label = "C", 
+  annotate("text", x = -Inf, y = Inf, label = "A", 
            hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
 BodyCond_TempsPop
 
@@ -372,7 +374,7 @@ BodyCondTempEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, colo
   theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('black','blue'))+
-  labs(x = "Temperature (\u00B0C)", y = "Body Condition")+
+  labs(x = "Temperature (\u00B0C)", y = "Experiment End Body Condition")+
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
   annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
 BodyCondTempEnd
@@ -385,59 +387,120 @@ BodyCondTempSex <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, colo
   theme(legend.position = "right", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('black','blue'))+
-  labs(x = "Temperature (\u00B0C)", y = "Body Condition")+
+  labs(x = "Temperature (\u00B0C)", y = "Experiment End Body Condition")+
   geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
   annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
 BodyCondTempSex
 
-#### Does AS influence Fulton's K Body Condition (by population)? ------------------
+
+#### Does temperature influence Fulton's K Body Condition (by population)? ------------------
+
+## Only 2 populations were used to measure MMR, SMR, and AS at the end of the experiment, so repeating Condition ~ AS*Ecotype would be the exact same as Condition ~ AS*Population. However, condition metrics were collected on all populations, so we can assess the affect of temperature directly for each condition metric.
 
 {
-  complete_data <- End[complete.cases(End[c("BodyCond", "AS", "Pop", "CCD", "Sex")]), ]
-  nrow(complete_data) #69
+  # temp is not a factor, using all fish
+  complete_data <- End2[complete.cases(End2[c("BodyCond", "Temp", "Pop", "Sex", "CCD")]), ]
+  nrow(complete_data) # 173
   
   hist(complete_data$BodyCond)
-  shapiro.test(complete_data$BodyCond)
-  BodyCond <- lme(BodyCond ~ AS*Pop + Sex, random = ~ 1 | CCD, data = complete_data)
+  BodyCond <- lme(BodyCond ~ Temp*Pop + Sex, random = ~ 1 | CCD, data = complete_data)
   summary(BodyCond)
 }
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC       BIC   logLik
+# -37.74783 -3.649303 29.87392
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept)  Residual
+# StdDev:   0.0579623 0.1750518
+# 
+# Fixed effects:  BodyCond ~ Temp * Pop + Sex 
+#                   Value Std.Error  DF   t-value p-value
+# (Intercept)  1.2672916 0.3151394 151  4.021368  0.0001
+# Temp        -0.0025560 0.0144733 151 -0.176600  0.8601
+# PopSL       -0.5943366 0.4574763  13 -1.299164  0.2165
+# PopWK       -1.1480315 0.5683912 151 -2.019791  0.0452
+# PopWT       -0.1092517 0.4107143  13 -0.266004  0.7944
+# SexM         0.2245847 0.0275847 151  8.141633  0.0000
+# Temp:PopSL   0.0195091 0.0209292 151  0.932144  0.3528
+# Temp:PopWK   0.0428453 0.0267196 151  1.603518  0.1109
+# Temp:PopWT  -0.0029648 0.0187418  13 -0.158189  0.8767
+# Correlation: 
+#   (Intr) Temp   PopSL  PopWK  PopWT  SexM   Tm:PSL Tm:PWK
+# Temp       -0.990                                                 
+# PopSL      -0.689  0.686                                          
+# PopWK      -0.428  0.437  0.305                                   
+# PopWT      -0.767  0.761  0.532  0.330                            
+# SexM       -0.001 -0.032 -0.124 -0.082 -0.024                     
+# Temp:PopSL  0.685 -0.695 -0.992 -0.310 -0.529  0.125              
+# Temp:PopWK  0.426 -0.443 -0.302 -0.994 -0.329  0.072  0.314       
+# Temp:PopWT  0.765 -0.772 -0.529 -0.336 -0.991  0.017  0.536  0.341
+# 
+# Standardized Within-Group Residuals:
+#   Min          Q1         Med          Q3         Max 
+# -2.98413447 -0.59369922  0.05188157  0.63370583  2.36571293 
+# 
+# Number of Observations: 173
+# Number of Groups: 17 
 
-slopes <- emtrends(BodyCond, "Pop", var = "AS")
-
+slopes <- emtrends(BodyCond, "Pop", var = "Temp")
+# Pop Temp.trend     SE  df lower.CL upper.CL
+# FG    -0.00256 0.0145 151 -0.03115   0.0260
+# SL     0.01695 0.0151 151 -0.01279   0.0467
+# WK     0.04029 0.0241 151 -0.00733   0.0879
+# WT    -0.00552 0.0119  13 -0.03126   0.0202
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
 pairs(slopes)
+# contrast estimate     SE  df t.ratio p.value
+# FG - SL  -0.01951 0.0209 151  -0.932  0.7876
+# FG - WK  -0.04285 0.0267 151  -1.604  0.3797
+# FG - WT   0.00296 0.0187  13   0.158  0.9985
+# SL - WK  -0.02334 0.0283 151  -0.825  0.8428
+# SL - WT   0.02247 0.0192  13   1.170  0.6552
+# WK - WT   0.04581 0.0269  13   1.703  0.3607
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
+# 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
 
 plot(BodyCond)
 
-BodyCondPopEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Pop)) +
-  geom_point(size = 0.5) +
+BodyCond_TempsPopEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
   theme_classic() +
-  theme(plot.margin = margin(1.1, .4, .4, .4, "cm"), axis.title = element_text(size = 10)) +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
-  scale_color_manual( values=c('black','blue', "grey", "lightblue2"))+
-  labs(x = expression(Experiment~End~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Experiment~End~Body~Condition))+
-  geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
-  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-  # annotate("text", x = 2200, y = .8, label = "AS*Ecotype: p<0.05", hjust = 1, vjust = 1, size = 2, fontface = "bold")
-BodyCondPopEnd
+  scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
+  labs(x = "Temperature (\u00B0C)", 
+       y = "Experiment End Body Condition")+
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "B", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+BodyCond_TempsPopEnd
 
-BodyCondSexEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Sex)) +
-  geom_point(size = 0.5) +
-  theme_classic() +
-  theme(legend.position = "none")+
-  scale_color_manual( values=c('black','blue'))+
-  labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Body~Condition))+
-  geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
-  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-BodyCondSexEnd
+
+### Hepatosomatic Index (HSI) -------------------------------------------------------
+
+
+#### Does AS influence HSI (by ecotype)? ------------------
 
 
 {
-complete_data <- End[complete.cases(End[c("HSI", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data)
-complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
-hist(complete_data$HSI)
-HSI <- lme(HSI ~ AS*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
-summary(HSI)
+  complete_data <- End[complete.cases(End[c("HSI", "AS", "Ecotype", "CCD", "Sex")]), ]
+  nrow(complete_data) #68
+  complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
+  hist(complete_data$HSI)
+  HSI <- lme(HSI ~ AS*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(HSI)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
@@ -485,17 +548,17 @@ pairs(slopes)
 # Degrees-of-freedom method: containment 
 plot(HSI)
 
-HSI <- ggplot(complete_data, aes(x=AS, y=HSI, color=Ecotype)) +
+HSIP <- ggplot(complete_data, aes(x=AS, y=HSI, color=Ecotype)) +
   geom_point(size = 0.5) +
   theme_classic() +
-  theme(plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  theme(plot.margin = margin(1.1, .4, .4, .4, "cm"), legend.position = "none") +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('black','blue'))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(HSI))+
-  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")+
-  annotate("text", x = 2200, y = 2, label = "AS: p<0.01\nAS*Ecotype: p<0.01", hjust = 1, vjust = 1, size = 2, fontface = "bold")
-HSI
+  annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")+
+  annotate("text", x = 2200, y = 2.55, label = "AS: p<0.01\nAS*Ecotype: p<0.05", hjust = 1, vjust = 1, size = 2, fontface = "bold")
+HSIP
 
 HSISex <- ggplot(complete_data, aes(x=AS, y=HSI, color=Sex)) +
   geom_point(size = 0.5) +
@@ -507,9 +570,192 @@ HSISex <- ggplot(complete_data, aes(x=AS, y=HSI, color=Sex)) +
 HSISex
 
 
+
+#### Does temperature directly influence HSI (by ecotype)? ------------------
+
+
+{
+  complete_data <- End2[complete.cases(End2[c("HSI", "Temp", "Ecotype", "CCD", "Sex")]), ]
+  nrow(complete_data) #171
+  
+  hist(complete_data$HSI)
+  HSI <- lme(HSI ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(HSI)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC      BIC    logLik
+# 640.1442 661.9281 -313.0721
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept) Residual
+# StdDev:   0.8593782 1.399091
+# 
+# Fixed effects:  HSI ~ Temp * Ecotype + Sex 
+#                         Value Std.Error  DF    t-value p-value
+# (Intercept)           4.862056  2.273721 150  2.1383695  0.0341
+# Temp                  0.039566  0.104260 150  0.3794964  0.7049
+# EcotypeLimnetic      -2.629109  3.505910 150 -0.7499080  0.4545
+# SexM                 -0.479119  0.222071 150 -2.1575049  0.0326
+# Temp:EcotypeLimnetic  0.103714  0.164244 150  0.6314668  0.5287
+# Correlation: 
+#   (Intr) Temp   EctypL SexM  
+# Temp                 -0.990                     
+# EcotypeLimnetic      -0.526  0.537              
+# SexM                 -0.003 -0.039 -0.158       
+# Temp:EcotypeLimnetic  0.528 -0.549 -0.993  0.153
+# 
+# Standardized Within-Group Residuals:
+#   Min          Q1         Med          Q3         Max 
+# -3.07361304 -0.66933307 -0.09814904  0.69956598  3.07538879 
+# 
+# Number of Observations: 171
+# Number of Groups: 17 
+
+slopes <- emtrends(HSI, "Ecotype", var = "Temp")
+# Ecotype  Temp.trend    SE  df lower.CL upper.CL
+# Benthic      0.0396 0.104 150   -0.166    0.246
+# Limnetic     0.1433 0.138 150   -0.129    0.416
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+plot(HSI)
+
+HSIPTemp <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Ecotype)) +
+  geom_jitter(aes(color = Ecotype, group = Ecotype), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('black','blue'))+
+  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
+  labs(x = "Temperature (\u00B0C)", y = expression(HSI))+
+  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
+HSIPTemp
+
+HSISexTemp <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Sex)) +
+  geom_jitter(aes(color = Sex, group = Sex), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +  theme_classic() +
+  scale_color_manual( values=c('black','blue'))+
+  geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
+  labs(x = "Temperature (\u00B0C)", y = expression(HSI))+
+  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+HSISexTemp
+
+
+#### Does temperature influence HSI (by population)? ------------------
+
+
+{
+  complete_data <- End2[complete.cases(End2[c("HSI", "Temp", "Pop", "CCD", "Sex")]), ]
+  nrow(complete_data) #171
+  
+  hist(complete_data$HSI)
+  HSI <- lme(HSI ~ Temp*Pop + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(HSI)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC     BIC    logLik
+# 633.9324 667.896 -305.9662
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept) Residual
+# StdDev:  0.08601202 1.412512
+# 
+# Fixed effects:  HSI ~ Temp * Pop + Sex 
+#                 Value Std.Error  DF    t-value p-value
+# (Intercept)  3.814271  2.029539 149  1.8793780  0.0621
+# Temp         0.080025  0.093252 149  0.8581580  0.3922
+# PopSL       -3.223457  2.766063  13 -1.1653592  0.2648
+# PopWK        0.521977  4.014431 149  0.1300253  0.8967
+# PopWT       -0.519815  2.451060  13 -0.2120778  0.8353
+# SexM        -0.449602  0.221937 149 -2.0258081  0.0446
+# Temp:PopSL   0.194958  0.128935 149  1.5120581  0.1326
+# Temp:PopWK  -0.083787  0.185552 149 -0.4515534  0.6522
+# Temp:PopWT   0.027634  0.112226  13  0.2462326  0.8093
+# Correlation: 
+#   (Intr) Temp   PopSL  PopWK  PopWT  SexM   Tm:PSL Tm:PWK
+# Temp       -0.990                                                 
+# PopSL      -0.731  0.731                                          
+# PopWK      -0.497  0.497  0.378                                   
+# PopWT      -0.828  0.821  0.611  0.414                            
+# SexM       -0.015 -0.028 -0.143 -0.090 -0.022                     
+# Temp:PopSL  0.714 -0.727 -0.993 -0.370 -0.596  0.141              
+# Temp:PopWK  0.490 -0.498 -0.372 -0.995 -0.409  0.082  0.370       
+# Temp:PopWT  0.823 -0.831 -0.606 -0.412 -0.991  0.012  0.602  0.413
+# 
+# Standardized Within-Group Residuals:
+#   Min         Q1        Med         Q3        Max 
+# -3.0049643 -0.6948291 -0.0492015  0.7101337  2.8667158 
+# 
+# Number of Observations: 171
+# Number of Groups: 17 
+
+slopes <- emtrends(HSI, "Pop", var = "Temp")
+#  Pop Temp.trend     SE  df lower.CL upper.CL
+# FG     0.08002 0.0933 149  -0.1042    0.264
+# SL     0.27498 0.0886 149   0.0999    0.450
+# WK    -0.00376 0.1610 149  -0.3216    0.314
+# WT     0.10766 0.0625  13  -0.0273    0.243
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+pairs(slopes)
+# contrast estimate    SE  df t.ratio p.value
+# FG - SL   -0.1950 0.129 149  -1.512  0.4329
+# FG - WK    0.0838 0.186 149   0.452  0.9692
+# FG - WT   -0.0276 0.112  13  -0.246  0.9945
+# SL - WK    0.2787 0.183 149   1.527  0.4241
+# SL - WT    0.1673 0.109  13   1.541  0.4430
+# WK - WT   -0.1114 0.173  13  -0.645  0.9153
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
+plot(HSI)
+
+HSI_TempsPopEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
+  labs(x = "Temperature (\u00B0C)", 
+       y = "HSI")+
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "C", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+HSI_TempsPopEnd
+
+
+HSISexTemp <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Sex)) +
+  geom_jitter(aes(color = Sex, group = Sex), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +  theme_classic() +
+  scale_color_manual( values=c('black','blue'))+
+  geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
+  labs(x = "Temperature (\u00B0C)", y = expression(HSI))+
+  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+HSISexTemp
+
+
+### Gonadosomatic Index (GSI - males only) -------------------------------------------------------
+
+
+#### Does AS influence GSI (by ecotype)? ------------------
+
 {
 complete_data <- End[complete.cases(End[c("GSI", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data)
+nrow(complete_data) #35
 
 hist(complete_data$GSI)
 GSI <- lme(GSI ~ AS*Ecotype, random = ~ 1 | CCD, data = complete_data)
@@ -543,28 +789,190 @@ summary(GSI)
 # 
 # Number of Observations: 35
 # Number of Groups: 5 
-emtrends(GSI, "Ecotype", var = "AS")
+slopes <- emtrends(GSI, "Ecotype", var = "AS")
 #  Ecotype   AS.trend       SE df  lower.CL upper.CL
 # Benthic  -1.46e-05 1.02e-04 28 -2.23e-04 0.000194
 # Limnetic  1.83e-04 7.11e-05 28  3.78e-05 0.000329
 # 
 # Degrees-of-freedom method: containment 
 # Confidence level used: 0.95 
+pairs(slopes)
+# contrast            estimate       SE df t.ratio p.value
+# Benthic - Limnetic -0.000198 0.000124 28  -1.593  0.1223
+# 
+# Degrees-of-freedom method: containment 
 plot(GSI)
 
-GSI <- ggplot(complete_data, aes(x=AS, y=GSI, color=Ecotype)) +
+GSIP <- ggplot(complete_data, aes(x=AS, y=GSI, color=Ecotype)) +
   geom_point(size = 0.5) +
   theme_classic() +
   theme(legend.position = "none") +
   scale_color_manual( values=c('black','blue'))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(GSI))+
-  annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold") 
-GSI
+  annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold") 
+GSIP
+
+
+#### Does temperature directly influence GSI (by ecotype)? ------------------
+
+{
+  complete_data <- End2[complete.cases(End2[c("GSI", "Temp", "Ecotype", "CCD", "Sex")]), ]
+  nrow(complete_data) #79
+  
+  hist(complete_data$GSI)
+  GSI <- lme(GSI ~ Temp*Ecotype, random = ~ 1 | CCD, data = complete_data)
+  summary(GSI)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC       BIC   logLik
+# -34.93656 -21.03163 23.46828
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept)  Residual
+# StdDev:   0.1016333 0.1438734
+# 
+# Fixed effects:  GSI ~ Temp * Ecotype 
+#                           Value Std.Error DF    t-value p-value
+# (Intercept)           0.28649545 0.3167809 60  0.9043961  0.3694
+# Temp                 -0.00049958 0.0143268 60 -0.0348704  0.9723
+# EcotypeLimnetic      -0.28888097 0.5001082 60 -0.5776369  0.5657
+# Temp:EcotypeLimnetic  0.01584557 0.0234527 60  0.6756401  0.5019
+# Correlation: 
+#   (Intr) Temp   EctypL
+# Temp                 -0.992              
+# EcotypeLimnetic      -0.561  0.561       
+# Temp:EcotypeLimnetic  0.547 -0.557 -0.993
+# 
+# Standardized Within-Group Residuals:
+#   Min         Q1        Med         Q3        Max 
+# -1.7148280 -0.6691286 -0.1769502  0.5501603  2.2241670 
+# 
+# Number of Observations: 79
+# Number of Groups: 16 
+slopes <- emtrends(GSI, "Ecotype", var = "Temp")
+# Ecotype  Temp.trend     SE df lower.CL upper.CL
+# Benthic     -0.0005 0.0143 60  -0.0292   0.0282
+# Limnetic     0.0153 0.0195 60  -0.0237   0.0544
+# 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+pairs(slopes)
+# contrast           estimate     SE df t.ratio p.value
+# Benthic - Limnetic  -0.0158 0.0235 60  -0.676  0.5019
+# 
+# Degrees-of-freedom method: containment 
+plot(GSI)
+
+GSITemp <- ggplot(complete_data, aes(x=as.factor(Temp), y=GSI, color=Ecotype)) +
+  geom_jitter(aes(color = Ecotype, group = Ecotype), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  scale_color_manual( values=c('black','blue'))+
+  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
+  labs(x = "Temperature (\u00B0C)", y = expression(GSI))+
+  annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold") 
+GSITemp
+
+
+#### Does temperature influence GSI (by population)? ------------------
+
+{
+  complete_data <- End2[complete.cases(End2[c("GSI", "Temp", "Pop", "CCD", "Sex")]), ]
+  nrow(complete_data) #79
+  
+  hist(complete_data$GSI)
+  GSI <- lme(GSI ~ Temp*Pop, random = ~ 1 | CCD, data = complete_data)
+  summary(GSI)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC       BIC   logLik
+# -25.22716 -2.600356 22.61358
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept) Residual
+# StdDev: 3.942687e-06  0.14322
+# 
+# Fixed effects:  GSI ~ Temp * Pop 
+#                 Value Std.Error DF    t-value p-value
+# (Intercept)  0.1185953 0.3619314 59  0.3276734  0.7443
+# Temp         0.0133994 0.0164719 59  0.8134716  0.4192
+# PopSL        0.6295068 0.4546168 12  1.3846979  0.1914
+# PopWK       -0.7062464 0.6278783 59 -1.1248142  0.2652
+# PopWT        0.1171760 0.4329074 12  0.2706721  0.7912
+# Temp:PopSL  -0.0346260 0.0213428 59 -1.6223705  0.1101
+# Temp:PopWK   0.0322775 0.0293071 59  1.1013554  0.2752
+# Temp:PopWT  -0.0159617 0.0195064 12 -0.8182822  0.4291
+# Correlation: 
+#   (Intr) Temp   PopSL  PopWK  PopWT  Tm:PSL Tm:PWK
+# Temp       -0.992                                          
+# PopSL      -0.796  0.790                                   
+# PopWK      -0.576  0.572  0.459                            
+# PopWT      -0.836  0.829  0.666  0.482                     
+# Temp:PopSL  0.766 -0.772 -0.992 -0.441 -0.640              
+# Temp:PopWK  0.558 -0.562 -0.444 -0.995 -0.466  0.434       
+# Temp:PopWT  0.838 -0.844 -0.667 -0.483 -0.993  0.652  0.475
+# 
+# Standardized Within-Group Residuals:
+#   Min         Q1        Med         Q3        Max 
+# -1.8447488 -0.5288671 -0.2106220  0.4602073  2.6441268 
+# 
+# Number of Observations: 79
+# Number of Groups: 16 
+
+slopes <- emtrends(GSI, "Pop", var = "Temp")
+#  Pop Temp.trend     SE df lower.CL upper.CL
+# FG     0.01340 0.0165 59 -0.01956  0.04636
+# SL    -0.02123 0.0136 59 -0.04838  0.00593
+# WK     0.04568 0.0242 59 -0.00283  0.09418
+# WT    -0.00256 0.0104 12 -0.02533  0.02020
+# 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+pairs(slopes)
+# contrast estimate     SE df t.ratio p.value
+# FG - SL    0.0346 0.0213 59   1.622  0.3742
+# FG - WK   -0.0323 0.0293 59  -1.101  0.6901
+# FG - WT    0.0160 0.0195 12   0.818  0.8448
+# SL - WK   -0.0669 0.0278 59  -2.408  0.0866
+# SL - WT   -0.0187 0.0171 12  -1.090  0.7021
+# WK - WT    0.0482 0.0264 12   1.828  0.3080
+# 
+# Degrees-of-freedom method: containment 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
+plot(GSI)
+
+GSI_TempsPopEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=GSI, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
+  labs(x = "Temperature (\u00B0C)", 
+       y = "GSI")+
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "D", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+GSI_TempsPopEnd
+
+
+### Spleenosomatic Index (SSI) -------------------------------------------------------
+
+
+#### Does AS influence SSI (by ecotype)? ------------------
+
 
 {
 complete_data <- End[complete.cases(End[c("SSI", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data)
+nrow(complete_data) #68
 
 hist(complete_data$SSI)
 SSI <- lme(SSI ~ AS*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
@@ -600,7 +1008,7 @@ summary(SSI)
 # 
 # Number of Observations: 68
 # Number of Groups: 5 
-emtrends(SSI, "Ecotype", var = "AS")
+slopes <- emtrends(SSI, "Ecotype", var = "AS")
 # Ecotype  AS.trend       SE df  lower.CL upper.CL
 # Benthic  1.82e-05 2.62e-05 60 -3.43e-05 7.06e-05
 # Limnetic 1.08e-05 2.12e-05 60 -3.16e-05 5.32e-05
@@ -608,18 +1016,224 @@ emtrends(SSI, "Ecotype", var = "AS")
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
 # Confidence level used: 0.95 
+pairs(slopes)
+# contrast           estimate       SE df t.ratio p.value
+# Benthic - Limnetic 7.36e-06 3.35e-05 60   0.220  0.8270
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
 plot(SSI)
 
-SSI <- ggplot(complete_data, aes(x=AS, y=SSI, color=Ecotype)) +
+SSIP <- ggplot(complete_data, aes(x=AS, y=SSI, color=Ecotype)) +
   geom_point(size = 0.5) +
   theme_classic() +
   theme(legend.position = "none") +
   scale_color_manual( values=c('black','blue'))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(SSI))+
-  annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-SSI
+  annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+SSIP
 
+
+#### Does temperature directly influence SSI (by ecotype)? ------------------
+
+{
+  complete_data <- End2[complete.cases(End2[c("SSI", "Temp", "Ecotype", "CCD", "Sex")]), ]
+  nrow(complete_data) #166
+  
+  hist(complete_data$SSI)
+  SSI <- lme(SSI ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(SSI)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC       BIC   logLik
+# -344.5849 -323.0151 179.2925
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept)   Residual
+# StdDev: 0.008375683 0.07319862
+# 
+# Fixed effects:  SSI ~ Temp * Ecotype + Sex 
+#                           Value  Std.Error  DF    t-value p-value
+# (Intercept)           0.16028067 0.06287392 145  2.5492392  0.0118
+# Temp                 -0.00148126 0.00287941 145 -0.5144322  0.6077
+# EcotypeLimnetic       0.02442189 0.10931135 145  0.2234158  0.8235
+# SexM                 -0.02590979 0.01161944 145 -2.2298666  0.0273
+# Temp:EcotypeLimnetic  0.00042133 0.00509331 145  0.0827231  0.9342
+# Correlation: 
+#   (Intr) Temp   EctypL SexM  
+# Temp                 -0.988                     
+# EcotypeLimnetic      -0.566  0.576              
+# SexM                 -0.019 -0.070 -0.175       
+# Temp:EcotypeLimnetic  0.551 -0.571 -0.994  0.178
+# 
+# Standardized Within-Group Residuals:
+#   Min         Q1        Med         Q3        Max 
+# -1.2695439 -0.6049009 -0.1958677  0.3002341  7.7166816 
+# 
+# Number of Observations: 166
+# Number of Groups: 17 
+slopes <- emtrends(SSI, "Ecotype", var = "Temp")
+# Ecotype  Temp.trend      SE  df lower.CL upper.CL
+# Benthic    -0.00148 0.00288 145 -0.00717  0.00421
+# Limnetic   -0.00106 0.00418 145 -0.00933  0.00721
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+pairs(slopes)
+# contrast            estimate      SE  df t.ratio p.value
+# Benthic - Limnetic -0.000421 0.00509 145  -0.083  0.9342
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+plot(SSI)
+
+SSIPTemp <- ggplot(complete_data, aes(x=as.factor(Temp), y=SSI, color=Ecotype)) +
+  geom_jitter(aes(color = Ecotype, group = Ecotype), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  scale_color_manual( values=c('black','blue'))+
+  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
+  labs(x = "Temperature (\u00B0C)", y = expression(SSI))+
+  annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+SSIPTemp
+
+BodyCond + HSI + GSI + SSI + FibPres + FibSev + plot_layout(ncol = 2)
+
+
+
+#### Does temperature influence SSI (by population)? ------------------
+
+
+{
+  complete_data <- End2[complete.cases(End2[c("SSI", "Temp", "Pop", "CCD", "Sex")]), ]
+  nrow(complete_data) #166
+  
+  hist(complete_data$SSI)
+  SSI <- lme(SSI ~ Temp*Pop + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(SSI)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC       BIC   logLik
+# -314.7798 -281.1611 168.3899
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept)   Residual
+# StdDev: 0.001288735 0.07291942
+# 
+# Fixed effects:  SSI ~ Temp * Pop + Sex 
+#                 Value  Std.Error  DF    t-value p-value
+# (Intercept)  0.06259904 0.10367811 144  0.6037826  0.5469
+# Temp         0.00252710 0.00476625 144  0.5302066  0.5968
+# PopSL        0.15069725 0.13901831  13  1.0840101  0.2981
+# PopWK       -0.03295722 0.20617053 144 -0.1598542  0.8732
+# PopWT        0.14711403 0.12584579  13  1.1690024  0.2634
+# SexM        -0.02475745 0.01166171 144 -2.1229687  0.0355
+# Temp:PopSL  -0.00440381 0.00649284 144 -0.6782565  0.4987
+# Temp:PopWK   0.00235221 0.00952280 144  0.2470079  0.8053
+# Temp:PopWT  -0.00609516 0.00577293  13 -1.0558168  0.3103
+# Correlation: 
+#   (Intr) Temp   PopSL  PopWK  PopWT  SexM   Tm:PSL Tm:PWK
+# Temp       -0.990                                                 
+# PopSL      -0.743  0.742                                          
+# PopWK      -0.501  0.500  0.387                                   
+# PopWT      -0.824  0.816  0.614  0.413                            
+# SexM       -0.016 -0.026 -0.135 -0.092  0.003                     
+# Temp:PopSL  0.725 -0.737 -0.992 -0.377 -0.599  0.133              
+# Temp:PopWK  0.494 -0.502 -0.380 -0.994 -0.408  0.083  0.378       
+# Temp:PopWT  0.818 -0.825 -0.607 -0.409 -0.991 -0.017  0.603  0.411
+# 
+# Standardized Within-Group Residuals:
+#   Min         Q1        Med         Q3        Max 
+# -1.3322100 -0.5223266 -0.1805554  0.2760204  7.6159276 
+# 
+# Number of Observations: 166
+# Number of Groups: 17 
+
+slopes <- emtrends(SSI, "Pop", var = "Temp")
+#  Pop Temp.trend      SE  df lower.CL upper.CL
+# FG     0.00253 0.00477 144 -0.00689  0.01195
+# SL    -0.00188 0.00439 144 -0.01055  0.00680
+# WK     0.00488 0.00824 144 -0.01140  0.02116
+# WT    -0.00357 0.00327  13 -0.01062  0.00349
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+pairs(slopes)
+# contrast estimate      SE  df t.ratio p.value
+# FG - SL   0.00440 0.00649 144   0.678  0.9052
+# FG - WK  -0.00235 0.00952 144  -0.247  0.9947
+# FG - WT   0.00610 0.00577  13   1.056  0.7210
+# SL - WK  -0.00676 0.00928 144  -0.728  0.8858
+# SL - WT   0.00169 0.00550  13   0.308  0.9894
+# WK - WT   0.00845 0.00888  13   0.952  0.7783
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
+plot(SSI)
+
+SSI_TempsPopEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=SSI, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
+  labs(x = "Temperature (\u00B0C)", 
+       y = "SSI")+
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "E", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+SSI_TempsPopEnd
+
+
+SSISexTemp <- ggplot(complete_data, aes(x=as.factor(Temp), y=SSI, color=Sex)) +
+  geom_jitter(aes(color = Sex, group = Sex), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +  theme_classic() +
+  scale_color_manual( values=c('black','blue'))+
+  geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
+  labs(x = "Temperature (\u00B0C)", y = expression(SSI))+
+  annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+SSISexTemp
+
+
+# Make Figures ------------------------------------------------------------
+
+
+pdf(file = "NewFigure5.pdf",
+    width = 8,
+    height = 8)
+
+BodyCondP + BodyCondEnd + HSIP + GSIP + SSIP + plot_layout(ncol = 2)
+
+dev.off()
+
+pdf(file = "NewSuppFig5.pdf",
+    width = 6,
+    height = 4)
+
+BodyCondSexEnd + HSISex
+
+dev.off()
+
+pdf(file = "NewSuppFig6.pdf",
+    width = 8,
+    height = 6)
+
+BodyCond_TempsPop + BodyCond_TempsPopEnd + HSI_TempsPopEnd + GSI_TempsPopEnd + SSI_TempsPopEnd
+
+dev.off()
 {
 End <- End %>% 
   mutate(
