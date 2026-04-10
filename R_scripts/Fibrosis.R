@@ -1,4 +1,5 @@
 # Analyze effect of/on fibrosis
+# Figure 4, Supplemental Figure 4
 
 # Three hypotheses:
 # 1) With respect to immunity, we expected that higher temperatures would weaken fibrosis responses and increase the incidence of cestode infections due to higher parasite growth rates at warmer temperatures.
