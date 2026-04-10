@@ -209,7 +209,7 @@ head(EcotypeMortality)
 Density <- read_xlsx("ThermalToleranceProject_SuspectDataRemoved.xlsx", sheet = "ThermTolData")
 
 {
-  LakeData <- read_xlsx("depth_profiles.xlsx")
+  LakeData <- read_xlsx("/home/ekerns/ThermTol/RawData/depth_profiles.xlsx")
   LakeData <- subset(LakeData, Lake == "Finger" | Lake == "Watson" | Lake == "Spirit" | Lake == "Wik")
 
   LakeData <- LakeData %>% mutate(
@@ -226,10 +226,21 @@ Density <- read_xlsx("ThermalToleranceProject_SuspectDataRemoved.xlsx", sheet = 
   colnames(LakeData)[7] <- "SA"
   colnames(LakeData)[1] <- "Pop"
   head(LakeData)
+  LakeSummary <- LakeData %>% 
+    dplyr::group_by(Pop) %>% 
+    dplyr::summarise(MinDepth = max(DepthM, na.rm = TRUE), 
+              MaxDepth = min(DepthM, na.rm = TRUE),
+              MedDepth = median(DepthM, na.rm = TRUE),
+              MeanDepth = mean(DepthM, na.rm = TRUE),
+              SA = first(SA),
+              .groups = 'drop')
+  LakeSummary
 }
 
 {
   ThermTol<- left_join(ThermTol, Density[ , c("FishID", "CCD")], by = c("FishID"))
+  ThermTol <- merge(ThermTol, LakeSummary, by = "Pop")
+  head(ThermTol)
    ThermTol$Trial <- factor(ThermTol$Trial, levels = c("S", "F"), 
                            labels = c("Start", "End"))
   
@@ -301,8 +312,10 @@ Density <- read_xlsx("ThermalToleranceProject_SuspectDataRemoved.xlsx", sheet = 
 }
 
 {
+  # a second dataframe to retain all fish for analysis that doesn't involve the respirometry data
   ThermTol2 <- read_xlsx("ThermalToleranceProject_OG.xlsx")
   head(ThermTol)
+  hist(ThermTol2$MMR)
   
   ThermTol2$Ecotype <- as.factor(ThermTol2$Ecotype)
   ThermTol2$Fibrosis <- as.factor(ThermTol2$Fibrosis)
