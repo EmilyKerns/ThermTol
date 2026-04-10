@@ -92,7 +92,7 @@ plot(BodyCond)
 BodyCond_Temps <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Ecotype)) +
   geom_jitter(aes(color = Ecotype, group = Ecotype), 
               position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
+              size = 1, alpha = 0.5) +
   theme_classic() +
   theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
@@ -291,7 +291,7 @@ BodyCondEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Ecotype)) +
   theme_classic() +
   theme(plot.margin = margin(1.1, .4, .4, .4, "cm"), axis.title = element_text(size = 10)) +
   coord_cartesian(clip = 'off') +
-  scale_color_manual( values=c('black','blue'))+
+  scale_color_manual( values=c('blue','black'))+
   labs(x = expression(Experiment~End~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Experiment~End~Body~Condition))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")+
@@ -553,7 +553,7 @@ HSIP <- ggplot(complete_data, aes(x=AS, y=HSI, color=Ecotype)) +
   theme_classic() +
   theme(plot.margin = margin(1.1, .4, .4, .4, "cm"), legend.position = "none") +
   coord_cartesian(clip = 'off') +
-  scale_color_manual( values=c('black','blue'))+
+  scale_color_manual( values=c('blue','black'))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(HSI))+
   annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")+
@@ -1186,7 +1186,7 @@ SSI_TempsPopEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=SSI, color=Pop
               position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
               size = 3, alpha = 0.2) +
   theme_classic() +
-  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  #theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
   labs(x = "Temperature (\u00B0C)", 
@@ -1227,163 +1227,6 @@ BodyCondSexEnd + HSISex
 
 dev.off()
 
-pdf(file = "NewSuppFig6.pdf",
-    width = 8,
-    height = 6)
-
-BodyCond_TempsPop + BodyCond_TempsPopEnd + HSI_TempsPopEnd + GSI_TempsPopEnd + SSI_TempsPopEnd
-
-dev.off()
-{
-End <- End %>% 
-  mutate(
-    Fibrosis = case_when(
-      Fibrosis == "Y" ~ 1,
-      Fibrosis == "N" ~ 0,
-      TRUE ~ NA_real_))
-
-complete_data <- End[complete.cases(End[c("Fibrosis", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data) #68
-
-FibPresA <- lme(AS ~ Fibrosis + Ecotype, random = ~ 1 | CCD, data = complete_data)
-summary(FibPresA)
-}
-# Linear mixed-effects model fit by REML
-# Data: complete_data 
-# AIC      BIC    logLik
-# 973.477 984.4252 -481.7385
-# 
-# Random effects:
-#   Formula: ~1 | CCD
-# (Intercept) Residual
-# StdDev:     183.234 319.8836
-# 
-# Fixed effects:  AS ~ Fibrosis + Ecotype 
-#                     Value Std.Error DF   t-value p-value
-# (Intercept)      901.2891  119.0035 63  7.573635  0.0000
-# Fibrosis        -202.0651   84.4671 63 -2.392234  0.0197
-# EcotypeLimnetic  258.9081  185.5241  3  1.395550  0.2572
-# Correlation: 
-#   (Intr) Fibrss
-# Fibrosis        -0.175       
-# EcotypeLimnetic -0.608 -0.082
-# 
-# Standardized Within-Group Residuals:
-#   Min          Q1         Med          Q3         Max 
-# -1.98736249 -0.66688853  0.07106841  0.59264074  3.34260167 
-# 
-# Number of Observations: 69
-# Number of Groups: 5 
-emmeans(FibPresA, ~ Fibrosis, at = list(Fibrosis = c(0,1)))
-# Fibrosis emmean    SE df lower.CL upper.CL
-# 0   1031  96.7  3      723     1339
-# 1    829 108.0  3      485     1173
-# 
-# Results are averaged over the levels of: Ecotype 
-# Degrees-of-freedom method: containment 
-# Confidence level used: 0.95  
-plot(FibPresA)
-
-anno <- data.frame(x1 = c(1), x2 = c(2), 
-                   y1 = c(2400), y2 = c(2500), 
-                   xstar = c(1.5), ystar = c(2560),
-                   lab = c("p<0.05"),
-                   Ecotype = c("Benthic"))
-anno
-
-
-FibPres <- ggplot(complete_data, aes(x = factor(Fibrosis), y = AS, color = Ecotype)) +
-  geom_boxplot(size = 0.5, width = 0.5, position = position_dodge(0.75)) +
-  geom_jitter(aes(color = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.75), 
-              size = 1, alpha = 0.2) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  scale_color_manual(values = c('black', 'blue')) +
-  scale_x_discrete(labels = c("Absent", "Present")) +
-  labs(x = expression(Fibrosis), y = expression(Aerobic~Scope~(mgO[2]/kg/hr))) +
-  geom_text(data = anno, aes(x = xstar, y = ystar, label = lab), size = 2, fontface = "bold") +
-  geom_segment(data = anno, aes(x = x1, xend = x1, y = y1, yend = y2), colour = "black") +
-  geom_segment(data = anno, aes(x = x2, xend = x2, y = y1, yend = y2), colour = "black") +
-  geom_segment(data = anno, aes(x = x1, xend = x2, y = y2, yend = y2), colour = "black") +
-  annotate("text", x = -Inf, y = Inf, label = "E", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-FibPres
-
-{
-model_data <- End %>%
-  filter(!is.na(FibrosisScore), !is.na(AS), !is.na(Ecotype), !is.na(CCD))
-
-FibSevA <- lme(AS ~ FibrosisScore + Ecotype, random = ~ 1 | CCD, data = model_data)
-summary(FibSevA)
-}
-# Linear mixed-effects model fit by REML
-# Data: model_data 
-# AIC      BIC    logLik
-# 977.5992 988.5475 -483.7996
-# 
-# Random effects:
-#   Formula: ~1 | CCD
-# (Intercept) Residual
-# StdDev:    171.2687 327.9803
-# 
-# Fixed effects:  AS ~ FibrosisScore + Ecotype 
-#                     Value Std.Error DF   t-value p-value
-# (Intercept)     880.6867 112.97386 63  7.795491  0.0000
-# FibrosisScore   -75.0849  45.93739 63 -1.634505  0.1071
-# EcotypeLimnetic 247.6439 176.62582  3  1.402082  0.2554
-# Correlation: 
-#   (Intr) FbrssS
-# FibrosisScore   -0.158       
-# EcotypeLimnetic -0.610 -0.086
-# 
-# Standardized Within-Group Residuals:
-#   Min         Q1        Med         Q3        Max 
-# -1.8881286 -0.5707999  0.1316754  0.5519239  3.4042313 
-# 
-# Number of Observations: 69
-# Number of Groups: 5 
-PermTest(FibSevA, B = 10000)
-# Monte-Carlo test
-# 
-# Call: 
-# PermTest.lme(obj = FibSevA, B = 10000)
-# 
-# Based on 10000 replicates
-# Simulated p-value:
-#   p.value
-# (Intercept)    0.9952
-# FibrosisScore  0.1074
-# Ecotype        0.1332
-emmeans(FibSevA, ~ FibrosisScore, at = list(FibrosisScore = c(0,1, 2, 3)))
-# FibrosisScore emmean    SE df lower.CL upper.CL
-# 0   1005  91.6  3      713     1296
-# 1    929  90.4  3      642     1217
-# 2    854 110.0  3      503     1205
-# 3    779 143.0  3      325     1234
-# 
-# Results are averaged over the levels of: Ecotype 
-# Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
-plot(FibSevA)
-
-
-FibScore <- ggplot(model_data, aes(x=as.factor(FibrosisScore), y=AS, color=Ecotype)) +
-  geom_boxplot(size = 0.5, width = 0.5)+
-  geom_jitter(aes(color = Ecotype), position = position_jitterdodge(jitter.width = 0.15, dodge.width = .75), size = 1, alpha = 0.2)+
-  theme_classic() +
-  scale_color_manual(values=c('black','blue'))+
-  labs(x = expression(Fibrosis~Score), y = expression(Aerobic~Scope~(mgO[2]/kg/hr)))+
-  annotate("text", x = -Inf, y = Inf, label = "F", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-FibScore
-
-pdf(file = "NewFigure5.pdf",
-   width = 8,
-   height = 8)
-
-BodyCond + HSI + GSI + SSI + plot_layout(ncol = 2)
-
-dev.off()
-
 
 # Scaled Mass Index -------------------------------------------------------
 
@@ -1400,7 +1243,7 @@ dev.off()
 ## Format data -------------------------------------------------------------
 
 {
-data <- read_xlsx("12125_ThermTol_OutliersRemoved.xlsx")
+data <- ThermTol2
 Ben_18 <- filter(data, Ecotype == "Benthic" & Temp == "18")
 Lim_18 <- filter(data, Ecotype == "Limnetic" & Temp == "18")
 Ben_all <- filter(data, Ecotype == "Benthic")
@@ -1437,19 +1280,19 @@ scaledMassIndex <-
 
 
 {
-mean(Ben_18$SL) # 61.65132
-median(Ben_18$SL) # 61.185
+mean(Ben_18$SL) # 62.01739
+median(Ben_18$SL) # 61.565
 
 Ben.dt.SMI <-
   scaledMassIndex(Ben_18$SL, Ben_18$Mass)
 summary(Ben.dt.SMI)
 #       SMI.ols         SMI.rob            x               y        
-# Min.   :1.584   Min.   :1.501   Min.   :51.60   Min.   :1.432  
-# 1st Qu.:2.429   1st Qu.:2.477   1st Qu.:59.13   1st Qu.:2.361  
-# Median :2.732   Median :2.757   Median :61.19   Median :2.811  
-# Mean   :2.772   Mean   :2.781   Mean   :61.65   Mean   :2.780  
-# 3rd Qu.:3.114   3rd Qu.:3.177   3rd Qu.:63.71   3rd Qu.:3.270  
-# Max.   :3.661   Max.   :3.741   Max.   :74.16   Max.   :4.343 
+# Min.   :1.609   Min.   :1.553   Min.   :51.60   Min.   :1.432  
+# 1st Qu.:2.428   1st Qu.:2.478   1st Qu.:59.61   1st Qu.:2.393  
+# Median :2.767   Median :2.793   Median :61.56   Median :2.847  
+# Mean   :2.830   Mean   :2.836   Mean   :62.02   Mean   :2.827  
+# 3rd Qu.:3.185   3rd Qu.:3.235   3rd Qu.:64.24   3rd Qu.:3.349  
+# Max.   :4.132   Max.   :4.181   Max.   :74.16   Max.   :4.343  
 
 
 g1 <-
@@ -1491,19 +1334,19 @@ SMI_Ben
 
 ## calculate scaled mass index for Limnetic Control fish --------------------
 {
-mean(Lim_18$SL) #61.49156
+mean(Lim_18$SL) #61.60083
 median(Lim_18$SL) # 61.575
 
 Lim.dt.SMI <-
-  scaledMassIndex(Lim_18$SL, Lim_18$Mass, x.0 = 61)
+  scaledMassIndex(Lim_18$SL, Lim_18$Mass)
 summary(Lim.dt.SMI)
 #         SMI.ols         SMI.rob            x               y        
-# Min.   :1.722   Min.   :1.719   Min.   :54.71   Min.   :1.703  
-# 1st Qu.:2.506   1st Qu.:2.502   1st Qu.:57.84   1st Qu.:2.338  
-# Median :2.765   Median :2.768   Median :61.58   Median :2.874  
-# Mean   :2.736   Mean   :2.736   Mean   :61.49   Mean   :2.820  
-# 3rd Qu.:3.110   3rd Qu.:3.108   3rd Qu.:64.35   3rd Qu.:3.072  
-# Max.   :3.617   Max.   :3.623   Max.   :72.76   Max.   :4.084 
+# Min.   :1.772   Min.   :1.766   Min.   :54.71   Min.   :1.449  
+# 1st Qu.:2.526   1st Qu.:2.525   1st Qu.:57.48   1st Qu.:2.331  
+# Median :2.831   Median :2.841   Median :61.58   Median :2.874  
+# Mean   :2.776   Mean   :2.777   Mean   :61.60   Mean   :2.789  
+# 3rd Qu.:3.048   3rd Qu.:3.052   3rd Qu.:64.38   3rd Qu.:3.125  
+# Max.   :3.756   Max.   :3.772   Max.   :72.90   Max.   :4.084  
 
 
 g1 <-
@@ -1529,7 +1372,7 @@ g3 <-
          aes(x, value)) +
   geom_point(aes(color = Method)) +
   xlab("Body length") +
-  ylab("SMI (at body length = 61)") +
+  ylab("Scaled Mass Index of Limnetic Control Fish") +
   scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
 g3
 
@@ -1544,24 +1387,27 @@ SMI_Lim
 
 SMI_Ben + SMI_Lim
 
-Ben.dt.SMI
 
 
 ## calculate scaled mass index for all benthic fish --------------------
 {
-  mean(Ben_all$SL) # 61.8378
-  median(Ben_all$SL) # 61.77
+  mean(Ben_all$SL, na.rm = TRUE) # 62.59357
+  median(Ben_all$SL, na.rm = TRUE) # 62.14
+  
+  Ben_all <- Ben_all[!is.na(Ben_all$Mass),]
+  Ben_all <- Ben_all[!is.na(Ben_all$SL),]
+  nrow(Ben_all) #205
   
   Ben.all.dt.SMI <-
     scaledMassIndex(Ben_all$SL, Ben_all$Mass, x.0 = 61)
   summary(Ben.all.dt.SMI)
   #       SMI.ols         SMI.rob            x               y        
-  # Min.   :1.560   Min.   :1.563   Min.   :51.09   Min.   :1.432  
-  # 1st Qu.:2.377   1st Qu.:2.379   1st Qu.:59.38   1st Qu.:2.523  
-  # Median :2.698   Median :2.699   Median :61.77   Median :2.774  
-  # Mean   :2.737   Mean   :2.738   Mean   :61.84   Mean   :2.861  
-  # 3rd Qu.:3.063   3rd Qu.:3.064   3rd Qu.:63.89   3rd Qu.:3.231  
-  # Max.   :4.306   Max.   :4.299   Max.   :74.16   Max.   :4.765 
+  # Min.   :1.458   Min.   :1.464   Min.   :51.09   Min.   :1.266  
+  # 1st Qu.:2.321   1st Qu.:2.360   1st Qu.:59.93   1st Qu.:2.590  
+  # Median :2.680   Median :2.695   Median :62.13   Median :2.931  
+  # Mean   :2.753   Mean   :2.762   Mean   :62.50   Mean   :3.001  
+  # 3rd Qu.:3.193   3rd Qu.:3.177   3rd Qu.:65.16   3rd Qu.:3.381  
+  # Max.   :4.443   Max.   :4.332   Max.   :75.50   Max.   :5.521  
   
 
   g1 <-
@@ -1605,19 +1451,23 @@ Ben.dt.SMI
 
 ## calculate scaled mass index for all limetic fish --------------------
 {
-  mean(Lim_all$SL) # 61.43267
-  median(Lim_all$SL) # 61.72
+  mean(Lim_all$SL) # 61.54148
+  median(Lim_all$SL) # 61.77
+  
+  Lim_all <- Lim_all[!is.na(Lim_all$Mass),]
+  Lim_all <- Lim_all[!is.na(Lim_all$SL),]
+  nrow(Lim_all) #181
   
   Lim.all.dt.SMI <-
     scaledMassIndex(Lim_all$SL, Lim_all$Mass)
   summary(Lim.all.dt.SMI)
   #       SMI.ols         SMI.rob            x               y        
-  # Min.   :1.733   Min.   :1.732   Min.   :49.49   Min.   :1.238  
-  # 1st Qu.:2.390   1st Qu.:2.389   1st Qu.:58.78   1st Qu.:2.336  
-  # Median :2.696   Median :2.696   Median :61.72   Median :2.735  
-  # Mean   :2.730   Mean   :2.730   Mean   :61.43   Mean   :2.741  
-  # 3rd Qu.:3.005   3rd Qu.:3.005   3rd Qu.:63.64   3rd Qu.:3.116  
-  # Max.   :3.928   Max.   :3.929   Max.   :72.76   Max.   :4.214 
+  # Min.   :1.680   Min.   :1.674   Min.   :49.49   Min.   :1.238  
+  # 1st Qu.:2.379   1st Qu.:2.379   1st Qu.:59.00   1st Qu.:2.336  
+  # Median :2.709   Median :2.705   Median :61.74   Median :2.716  
+  # Mean   :2.717   Mean   :2.715   Mean   :61.54   Mean   :2.732  
+  # 3rd Qu.:3.035   3rd Qu.:3.027   3rd Qu.:63.85   3rd Qu.:3.107  
+  # Max.   :4.013   Max.   :3.987   Max.   :72.90   Max.   :4.970  
   
   
   g1 <-
@@ -1660,7 +1510,264 @@ Ben.dt.SMI
 SMI_Ben + SMI_Lim
 
 
-## The effect of AS & temp on SMI ---------------------------------
+
+# SMI by population -------------------------------------------------------
+
+
+## Format data -------------------------------------------------------------
+
+{
+  WK_18 <- filter(data, Pop == "WK" & Temp == "18")
+  SL_18 <- filter(data, Pop == "SL" & Temp == "18")
+  WT_18 <- filter(data, Pop == "WT" & Temp == "18")
+  FG_18 <- filter(data, Pop == "FG" & Temp == "18")
+  WK_all <- filter(data, Pop == "WK")
+  SL_all <- filter(data, Pop == "SL")
+  WT_all <- filter(data, Pop == "WT")
+  FG_all <- filter(data, Pop == "FG")
+}
+
+
+## calculate scaled mass index for all WK fish --------------------
+{
+  mean(WK_all$SL) # 62.13075
+  median(WK_all$SL) # 62.62
+  
+  WK.all.dt.SMI <-
+    scaledMassIndex(WK_all$SL, WK_all$Mass, x.0 = 61)
+  summary(WK.all.dt.SMI)
+  #       SMI.ols         SMI.rob            x               y        
+  # Min.   :1.643   Min.   :1.571   Min.   :49.49   Min.   :1.238  
+  # 1st Qu.:2.243   1st Qu.:2.176   1st Qu.:59.43   1st Qu.:2.240  
+  # Median :2.385   Median :2.391   Median :62.62   Median :2.708  
+  # Mean   :2.462   Mean   :2.455   Mean   :62.13   Mean   :2.693  
+  # 3rd Qu.:2.730   3rd Qu.:2.726   3rd Qu.:64.45   3rd Qu.:3.170  
+  # Max.   :3.478   Max.   :3.558   Max.   :72.90   Max.   :4.596  
+  
+  
+  g1 <-
+    ggplot(WK_all, aes(x = SL, y = Mass)) +
+    geom_point() +
+    geom_line(aes(x, y, color = Method),
+              data = attr(WK.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))+
+    geom_text(aes(label=FishID), size=3, hjust=0, vjust=0)
+  g1
+  
+
+  g2 <-ggplot(WK_all, aes(x = log10(SL), y = log10(Mass))) +
+    geom_point() +
+    geom_line(
+      aes(log10(x), log10(y), color = Method),
+      data = attr(WK.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")
+    ) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g2
+  
+  g3 <-
+    ggplot(reshape2::melt(WK.all.dt.SMI, "x", c("SMI.ols", "SMI.rob"), "Method"),
+           aes(x, value)) +
+    geom_point(aes(color = Method)) +
+    xlab("Body length") +
+    ylab("SMI at mean body length of WK fish)") +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g3
+  
+  SMI_WK_all <- ggarrange(g1,
+                       g2,
+                       g3,
+                       ncol = 1,
+                       nrow = 3,
+                       align = "hv")
+  SMI_WK_all
+}
+
+
+## calculate scaled mass index for all SL fish --------------------
+{
+  mean(SL_all$SL) # 61.29938
+  median(SL_all$SL) # 61.31
+  
+  SL_all <- SL_all[!is.na(SL_all$Mass),]
+  SL_all <- SL_all[!is.na(SL_all$SL),]
+  nrow(SL_all) #128
+  
+  SL.all.dt.SMI <-
+    scaledMassIndex(SL_all$SL, SL_all$Mass)
+  summary(SL.all.dt.SMI)
+  #       SMI.ols         SMI.rob            x               y        
+  #  Min.   :1.654   Min.   :1.643   Min.   :53.00   Min.   :1.432  
+  # 1st Qu.:2.390   1st Qu.:2.403   1st Qu.:58.95   1st Qu.:2.392  
+  # Median :2.725   Median :2.725   Median :61.27   Median :2.720  
+  # Mean   :2.743   Mean   :2.740   Mean   :61.29   Mean   :2.747  
+  # 3rd Qu.:3.075   3rd Qu.:3.067   3rd Qu.:63.31   3rd Qu.:3.072  
+  # Max.   :3.948   Max.   :3.905   Max.   :71.15   Max.   :4.970  
+  
+  
+  g1 <-
+    ggplot(SL_all, aes(SL, Mass)) +
+    geom_point() +
+    geom_line(aes(x, y, color = Method),
+              data = attr(SL.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)")) +
+    geom_text(aes(label=FishID), size=3, hjust=0, vjust=0)
+  g1
+  
+  g2 <-
+    ggplot(SL_all, aes(log10(SL), log10(Mass))) +
+    geom_point() +
+    geom_line(
+      aes(log10(x), log10(y), color = Method),
+      data = attr(SL.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")
+    ) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g2
+  
+  g3 <-
+    ggplot(reshape2::melt(SL.all.dt.SMI, "x", c("SMI.ols", "SMI.rob"), "Method"),
+           aes(x, value)) +
+    geom_point(aes(color = Method)) +
+    xlab("Body length") +
+    ylab("SMI (at mean body length of SL fish)") +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g3
+  
+  SMI_SL <- ggarrange(g1,
+                       g2,
+                       g3,
+                       ncol = 1,
+                       nrow = 3,
+                       align = "hv")
+  SMI_SL
+}
+
+SMI_WK_all + SMI_SL
+
+
+
+## calculate scaled mass index for all WT fish --------------------
+{
+  mean(WT_all$SL, na.rm = TRUE) # 62.45688
+  median(WT_all$SL, na.rm = TRUE) # 62.13
+  
+  WT_all <- WT_all[!is.na(WT_all$Mass),]
+  WT_all <- WT_all[!is.na(WT_all$SL),]
+  nrow(WT_all) #139
+  
+  WT.all.dt.SMI <-
+    scaledMassIndex(WT_all$SL, WT_all$Mass)
+  summary(WT.all.dt.SMI)
+  #       SMI.ols         SMI.rob            x               y        
+  # Min.   :1.958   Min.   :1.890   Min.   :51.09   Min.   :1.266  
+  # 1st Qu.:2.528   1st Qu.:2.540   1st Qu.:59.80   1st Qu.:2.554  
+  # Median :2.809   Median :2.798   Median :62.11   Median :2.836  
+  # Mean   :2.861   Mean   :2.857   Mean   :62.32   Mean   :2.871  
+  # 3rd Qu.:3.146   3rd Qu.:3.121   3rd Qu.:64.44   3rd Qu.:3.163  
+  # Max.   :4.130   Max.   :4.155   Max.   :75.50   Max.   :5.165   
+  
+  
+  g1 <-
+    ggplot(WT_all, aes(SL, Mass)) +
+    geom_point() +
+    geom_line(aes(x, y, color = Method),
+              data = attr(WT.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)")) +
+    geom_text(aes(label=FishID), size=3, hjust=0, vjust=0)
+  g1
+  
+  g2 <-
+    ggplot(WT_all, aes(log10(SL), log10(Mass))) +
+    geom_point() +
+    geom_line(
+      aes(log10(x), log10(y), color = Method),
+      data = attr(WT.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")
+    ) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g2
+  
+  g3 <-
+    ggplot(reshape2::melt(WT.all.dt.SMI, "x", c("SMI.ols", "SMI.rob"), "Method"),
+           aes(x, value)) +
+    geom_point(aes(color = Method)) +
+    xlab("Body length") +
+    ylab("SMI (at mean body length of WT fish)") +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g3
+  
+  SMI_WT <- ggarrange(g1,
+                      g2,
+                      g3,
+                      ncol = 1,
+                      nrow = 3,
+                      align = "hv")
+  SMI_WT
+}
+
+SMI_WK_all + SMI_SL + SMI_WT
+
+
+
+
+
+## calculate scaled mass index for all WT fish --------------------
+{
+  mean(FG_all$SL) # 62.88561
+  median(FG_all$SL) # 62.265
+  
+  FG.all.dt.SMI <-
+    scaledMassIndex(FG_all$SL, FG_all$Mass)
+  summary(FG.all.dt.SMI)
+  #       SMI.ols         SMI.rob            x               y        
+  # Min.   :1.599   Min.   :1.628   Min.   :52.58   Min.   :1.505  
+  # 1st Qu.:2.576   1st Qu.:2.649   1st Qu.:60.11   1st Qu.:2.771  
+  # Median :3.370   Median :3.416   Median :62.27   Median :3.352  
+  # Mean   :3.313   Mean   :3.301   Mean   :62.89   Mean   :3.273  
+  # 3rd Qu.:4.098   3rd Qu.:4.028   3rd Qu.:65.75   3rd Qu.:3.708  
+  # Max.   :5.231   Max.   :5.005   Max.   :74.16   Max.   :5.521  
+  
+  
+  g1 <-
+    ggplot(FG_all, aes(SL, Mass)) +
+    geom_point() +
+    geom_line(aes(x, y, color = Method),
+              data = attr(FG.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)")) +
+    geom_text(aes(label=FishID), size=3, hjust=0, vjust=0)
+  g1
+  
+  g2 <-
+    ggplot(FG_all, aes(log10(SL), log10(Mass))) +
+    geom_point() +
+    geom_line(
+      aes(log10(x), log10(y), color = Method),
+      data = attr(FG.all.dt.SMI, "pred") %>% melt(., "x", c("y.ols", "y.rob"), "Method", "y")
+    ) +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g2
+  
+  g3 <-
+    ggplot(reshape2::melt(FG.all.dt.SMI, "x", c("SMI.ols", "SMI.rob"), "Method"),
+           aes(x, value)) +
+    geom_point(aes(color = Method)) +
+    xlab("Body length") +
+    ylab("SMI (at mean body length of FG fish)") +
+    scale_colour_discrete(labels = c("OLS", "Robust (M-estimation)"))
+  g3
+  
+  SMI_FG <- ggarrange(g1,
+                      g2,
+                      g3,
+                      ncol = 1,
+                      nrow = 3,
+                      align = "hv")
+  SMI_FG
+}
+
+SMI_WK_all + SMI_SL + SMI_WT + SMI_FG
+
+
+
+# The effect of AS & temp on SMI ---------------------------------
 
 
 {
@@ -1679,11 +1786,30 @@ data <- bind_rows(Ben_all, Lim_all)
 
 data <- left_join(data, ThermTol[, c("CCD", "FishID")], by = "FishID")
 
+todrop.1 <- which(data$FishID %in% c("WK24S_7","SL26S_6","SL26S_9","SL26S_10","SL26S_11","FG26S_2","WT_24S_15","WT22S_2","WT24S_15","WK18S_4", "WT20S_10", "FG22S_6", "FG22S_1"))
+
+data <- data[-todrop.1,]
+
 table(data$Ecotype)
+# Benthic Limnetic 
+#  199      175 
 is.na(data$SMI.rob)
 
-SMI_end <- filter(data, Trial == "F")
-SMI_start <- filter(data, Trial == "S")
+SMI_end <- filter(data, Trial == "End")
+table(SMI_end$Ecotype)
+# Benthic Limnetic 
+# 100       78 
+table(SMI_end$Pop)
+# FG SL WK WT 
+# 31 57 21 69  
+
+SMI_start <- filter(data, Trial == "Start")
+table(SMI_start$Ecotype)
+# Benthic Limnetic 
+# 99       97 
+table(SMI_start$Pop)
+# FG SL WK WT 
+# 32 67 30 67 
 
 data$Temp <- as.factor(data$Temp)
 
@@ -1704,69 +1830,74 @@ SMI_AS
 ## Experiment end --------------------------------------------------------
 
 {
-complete_data <- SMI_end[complete.cases(SMI_end[c("SMI.rob", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data)
+  SMI_end<- left_join(SMI_end, Density[ , c("FishID", "CCD")], by = c("FishID"))
+  complete_data <- SMI_end[complete.cases(SMI_end[c("SMI.rob", "AS", "Ecotype", "CCD", "Sex")]), ]
+  nrow(complete_data) #69
 
-hist(complete_data$SMI.rob)
-complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
-SMI.rob <- lme(SMI.rob ~ AS*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
-summary(SMI.rob)
+  hist(complete_data$SMI.rob)
+  complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
+  SMI.rob <- lme(SMI.rob ~ AS*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(SMI.rob)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
 # AIC      BIC    logLik
-# 90.68031 105.6823 -38.34015
+# 91.29819 106.4104 -38.64909
 # 
 # Random effects:
 #   Formula: ~1 | CCD
 # (Intercept) Residual
-# StdDev:  0.09153585 0.318888
+# StdDev:  0.09278112 0.317726
 # 
 # Fixed effects:  SMI.rob ~ AS * Ecotype + Sex 
-#                         Value  Std.Error DF   t-value p-value
-# (Intercept)        2.5516259 0.21631199 60 11.796045  0.0000
-# AS                -0.0002582 0.00018382 60 -1.404805  0.1652
-# EcotypeBenthic    -0.4607935 0.27208001  3 -1.693596  0.1889
-# SexM               0.5324593 0.08117568 60  6.559346  0.0000
-# AS:EcotypeBenthic  0.0005091 0.00026086 60  1.951724  0.0556
+#                       Value  Std.Error DF   t-value p-value
+# (Intercept)        2.5189728 0.18785705 61 13.408987  0.0000
+# AS                -0.0002159 0.00014872 61 -1.451981  0.1516
+# EcotypeBenthic    -0.4372802 0.25032769  3 -1.746831  0.1790
+# SexM               0.5475745 0.08034519 61  6.815274  0.0000
+# AS:EcotypeBenthic  0.0004644 0.00023466 61  1.979159  0.0523
 # Correlation: 
 #   (Intr) AS     EctypB SexM  
-# AS                -0.890                     
-# EcotypeBenthic    -0.788  0.706              
-# SexM              -0.246  0.060  0.168       
-# AS:EcotypeBenthic  0.669 -0.715 -0.902 -0.211
+# AS                -0.851                     
+# EcotypeBenthic    -0.744  0.639              
+# SexM              -0.218 -0.010  0.134       
+# AS:EcotypeBenthic  0.580 -0.632 -0.881 -0.180
 # 
 # Standardized Within-Group Residuals:
 #   Min          Q1         Med          Q3         Max 
-# -2.30995669 -0.61755591 -0.06000501  0.61872598  2.18767892 
+# -2.32357527 -0.62516838 -0.08451066  0.59830049  2.19903290 
 # 
-# Number of Observations: 68
+# Number of Observations: 69
 # Number of Groups: 5 
 
 slopes <- emtrends(SMI.rob, "Ecotype", var = "AS")
 slopes
 # Ecotype   AS.trend       SE df  lower.CL upper.CL
-# Limnetic -0.000258 0.000184 60 -0.000626 0.000109
-# Benthic   0.000251 0.000182 60 -0.000114 0.000616
-# 
+# Limnetic -0.000216 0.000149 61 -0.000513 8.14e-05
+# Benthic   0.000248 0.000182 61 -0.000115 6.12e-04
+#
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
 # Confidence level used: 0.95 
+pairs(slopes)
+# contrast            estimate       SE df t.ratio p.value
+# Limnetic - Benthic -0.000464 0.000235 61  -1.979  0.0523
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
 plot(SMI.rob)
 
-SMI_AS <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Ecotype)) +
-  geom_jitter(aes(color = Ecotype, group = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
+SMI_AS_end <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Ecotype)) +
+  geom_point(size = .5) +
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
   theme_classic() +
   #theme(legend.position = "none") +
   scale_color_manual(values = c('blue', 'black')) +
-  labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = "SMI") +
-  annotate("text", x = -Inf, y = Inf, label = "A", 
+  labs(x = expression(Experiment~End~Aerobic~Scope~(mgO[2]/kg/hr)), y = "Experiment End Scaled Mass Index") +
+  annotate("text", x = -Inf, y = Inf, label = "B", 
            hjust = -0.5, vjust = 1, size = 5, fontface = "bold") +
-  annotate("text", x = 1800, y = 3.5, label = "AS*Ecotype: p=0.0556", hjust = 1, vjust = -1, size = 2, fontface = "bold")
-SMI_AS
+  annotate("text", x = 2100, y = 3.5, label = "AS*Ecotype: p=0.0523", hjust = 1, vjust = -1, size = 2, fontface = "bold")
+SMI_AS_end
 
 SMI_Sex <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Sex)) +
   geom_jitter(aes(color = Sex, group = Sex), 
@@ -1781,63 +1912,73 @@ SMI_Sex <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Sex)) +
 SMI_Sex
 
 {
-SMI.rob <- lme(SMI.rob ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
-summary(SMI.rob)
+  # Temp is numeric, including all fish
+  complete_data <- SMI_end[complete.cases(SMI_end[c("SMI.rob", "Temp", "Ecotype", "CCD", "Sex")]), ]
+  complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
+  
+  SMI.rob <- lme(SMI.rob ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(SMI.rob)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC      BIC    logLik
-# 72.04941 87.05136 -29.02471
+# AIC      BIC   logLik
+# 218.3479 240.2157 -102.174
 # 
 # Random effects:
 #   Formula: ~1 | CCD
 # (Intercept)  Residual
-# StdDev:  0.07443952 0.3245581
+# StdDev:   0.2296614 0.3910287
 # 
 # Fixed effects:  SMI.rob ~ Temp * Ecotype + Sex 
-#                           Value Std.Error DF   t-value p-value
-# (Intercept)          3.0350213 0.8322531 62  3.646753  0.0005
-# Temp                -0.0381461 0.0411870  1 -0.926168  0.5244
-# EcotypeBenthic      -0.2358912 0.9420745  1 -0.250396  0.8438
-# SexM                 0.5541494 0.0805218 62  6.881982  0.0000
-# Temp:EcotypeBenthic  0.0148746 0.0460541  1  0.322980  0.8011
+#                           Value Std.Error  DF   t-value p-value
+# (Intercept)          0.6317519 0.7940777 152  0.795579  0.4275
+# Temp                 0.0763124 0.0361857 152  2.108909  0.0366
+# EcotypeBenthic       2.3054698 0.9359716 152  2.463183  0.0149
+# SexM                 0.5856956 0.0617089 152  9.491268  0.0000
+# Temp:EcotypeBenthic -0.0972636 0.0436503 152 -2.228247  0.0273
 # Correlation: 
 #   (Intr) Temp   EctypB SexM  
-# Temp                -0.994                     
-# EcotypeBenthic      -0.872  0.870              
-# SexM                -0.175  0.126  0.091       
-# Temp:EcotypeBenthic  0.886 -0.892 -0.993 -0.098
+# Temp                -0.992                     
+# EcotypeBenthic      -0.757  0.764              
+# SexM                -0.184  0.149  0.155       
+# Temp:EcotypeBenthic  0.746 -0.764 -0.992 -0.150
 # 
 # Standardized Within-Group Residuals:
 #   Min          Q1         Med          Q3         Max 
-# -2.52284098 -0.59754621  0.02250419  0.59780116  1.96512310 
+# -2.63142629 -0.61385562  0.08125319  0.60384327  2.57979464 
 # 
-# Number of Observations: 68
-# Number of Groups: 5 
-emtrends(SMI.rob, "Ecotype", var = "Temp")
+# Number of Observations: 173
+# Number of Groups: 17 
+slopes <- emtrends(SMI.rob, "Ecotype", var = "Temp")
 # Ecotype  Temp.trend     SE df lower.CL upper.CL
-# Limnetic    -0.0381 0.0412  1   -0.561    0.485
-# Benthic     -0.0233 0.0208  1   -0.287    0.241
+# Limnetic     0.0763 0.0362 152  0.00482    0.148
+# Benthic     -0.0210 0.0283 152 -0.07686    0.035
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
 # Confidence level used: 0.95
+pairs(slopes)
+# contrast           estimate     SE  df t.ratio p.value
+# Limnetic - Benthic   0.0973 0.0437 152   2.228  0.0273
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
 plot(SMI.rob)
 
-complete_data$Temp <- as.factor(complete_data$Temp)
 
-SMI_temp <- ggplot(complete_data, aes(x=Temp, y=SMI.rob, color=Ecotype)) +
+SMI_temp_end <- ggplot(complete_data, aes(x=as.factor(Temp), y=SMI.rob, color=Ecotype)) +
   geom_jitter(aes(color = Ecotype, group = Ecotype), 
               position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
+              size = 1, alpha = 0.5) +
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
   theme_classic() +
   #theme(legend.position = "none") +
-  scale_color_manual(values = c('black', 'blue')) +
-  labs(x = "Temp", y = "SMI") +
-  annotate("text", x = -Inf, y = Inf, label = "B", 
+  scale_color_manual(values = c('blue', 'black')) +
+  labs(x = expression("Temperature (\u00B0C)"), y = "Experiment End Scaled Mass Index") +
+  annotate("text", x = 5, y = 1, label = "Temp: p<0.05\nEcotype: p<0.05\nTemp*Ecotype: p<0.05", hjust = 1, vjust = 0, size = 2, fontface = "bold")+
+  annotate("text", x = -Inf, y = Inf, label = "D", 
            hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-SMI_temp
+SMI_temp_end
 
 SMI_temp_sex <- ggplot(complete_data, aes(x=Temp, y=SMI.rob, color=Sex)) +
   geom_jitter(aes(color = Sex, group = Sex), 
@@ -1856,42 +1997,47 @@ SMI_temp_sex
 ## Experiment start --------------------------------------------------------
 {
 complete_data <- SMI_start[complete.cases(SMI_start[c("SMI.rob", "AS", "Ecotype")]), ]
-nrow(complete_data)
+nrow(complete_data) #183
 
 hist(complete_data$SMI.rob)
 complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
 SMI.rob <- glm(SMI.rob ~ AS*Ecotype, data = complete_data)
 summary(SMI.rob)
 }
-#                       Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)        2.5390374  0.1786698  14.211   <2e-16 ***
-# AS                 0.0002127  0.0001514   1.405   0.1618    
-# EcotypeBenthic     0.5682670  0.2706757   2.099   0.0372 *  
-# AS:EcotypeBenthic -0.0005115  0.0002439  -2.098   0.0374 *  
+#                     Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)        2.5664237  0.1657590  15.483   <2e-16 ***
+# AS                 0.0002100  0.0001419   1.480   0.1407    
+# EcotypeBenthic     0.5485111  0.2599541   2.110   0.0362 *  
+# AS:EcotypeBenthic -0.0005142  0.0002335  -2.202   0.0289 *  
 # 
-# Null deviance: 45.105  on 178  degrees of freedom
-# Residual deviance: 43.974  on 175  degrees of freedom
-# AIC: 266.7
-emtrends(SMI.rob, "Ecotype", var = "AS")
+# (Dispersion parameter for gaussian family taken to be 0.2621471)
+# 
+# Null deviance: 48.204  on 182  degrees of freedom
+# Residual deviance: 46.924  on 179  degrees of freedom
+# AIC: 280.28
+
+slopes <- emtrends(SMI.rob, "Ecotype", var = "AS")
 # Ecotype   AS.trend       SE  df  lower.CL upper.CL
-# Limnetic  0.000213 0.000151 175 -8.61e-05 5.12e-04
-# Benthic  -0.000299 0.000191 175 -6.76e-04 7.85e-05
+# Limnetic  0.000210 0.000142 179 -7.01e-05 4.90e-04
+# Benthic  -0.000304 0.000185 179 -6.70e-04 6.17e-05
+pairs(slopes)
+# contrast           estimate       SE  df t.ratio p.value
+# Limnetic - Benthic 0.000514 0.000233 179   2.202  0.0289
+
 plot(SMI.rob)
 
-SMI_AS <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Ecotype)) +
-  geom_jitter(aes(color = Ecotype, group = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
+SMI_AS_start <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Ecotype)) +
+  geom_point(size = .5) +
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
   theme_classic() +
-  theme(plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
   scale_color_manual(values = c('blue', 'black')) +
-  labs(x = expression(Post~Acclimation~Aerobic~Scope~(mgO[2]/kg/hr)), y = "Post Acclimation SMI") +
-  annotate("text", x = -Inf, y = Inf, label = "B", 
+  labs(x = expression(Experiment~Start~Aerobic~Scope~(mgO[2]/kg/hr)), y = "Experiment Start Scaled Mass Index") +
+  annotate("text", x = -Inf, y = Inf, label = "A", 
            hjust = -0.5, vjust = 1, size = 5, fontface = "bold") +
   annotate("text", x = 1800, y = 4, label = "Ecotype: p<0.05\nAS*Ecotype: p<0.05", hjust = 1, vjust = -1, size = 2, fontface = "bold")
-SMI_AS
+SMI_AS_start
 
 BodyCondP + SMI_AS
 
@@ -1905,172 +2051,258 @@ SMI.rob <- glm(SMI.rob ~ Temp*Ecotype, data = complete_data)
 summary(SMI.rob)
 }
 #                       Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)          3.45045    0.42923   8.039  1.3e-13 ***
-# Temp                -0.03081    0.01956  -1.575   0.1170    
-# EcotypeBenthic      -1.10387    0.60035  -1.839   0.0677 .  
-# Temp:EcotypeBenthic  0.05164    0.02732   1.890   0.0604 .  
+# (Intercept)          3.50207    0.42847   8.173 3.97e-14 ***
+# Temp                -0.03228    0.01948  -1.657   0.0991 .  
+# EcotypeBenthic      -1.22035    0.58303  -2.093   0.0377 *  
+# Temp:EcotypeBenthic  0.05507    0.02642   2.084   0.0385 *  
 # 
-# Null deviance: 45.105  on 178  degrees of freedom
-# Residual deviance: 44.157  on 175  degrees of freedom
-# AIC: 267.45
-emtrends(SMI.rob, "Ecotype", var = "Temp")
+# (Dispersion parameter for gaussian family taken to be 0.2600501)
+# 
+# Null deviance: 51.079  on 195  degrees of freedom
+# Residual deviance: 49.930  on 192  degrees of freedom
+# AIC: 298.19
+slopes <- emtrends(SMI.rob, "Ecotype", var = "Temp")
 # Ecotype  Temp.trend     SE  df lower.CL upper.CL
-# Limnetic    -0.0308 0.0196 175  -0.0694  0.00779
-# Benthic      0.0208 0.0191 175  -0.0168  0.05849
+# Limnetic    -0.0323 0.0195 192  -0.0707  0.00614
+# Benthic      0.0228 0.0179 192  -0.0124  0.05800
+pairs(slopes)
+# contrast           estimate     SE  df t.ratio p.value
+# Limnetic - Benthic  -0.0551 0.0264 192  -2.084  0.0385
 plot(SMI.rob)
 
 SMI_Temp <- ggplot(complete_data, aes(x=as.factor(Temp), y=SMI.rob, color=Ecotype)) +
   geom_jitter(aes(color = Ecotype, group = Ecotype), 
               position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
+              size = 1, alpha = 0.5) +
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
   theme_classic() +
   theme(legend.position = "none") +
   scale_color_manual(values = c('blue', 'black')) +
-  labs(x = expression("Temperature (\u00B0C)"), y = "Post Acclimation SMI") +
-  annotate("text", x = -Inf, y = Inf, label = "D", 
+  labs(x = expression("Temperature (\u00B0C)"), y = "Experiment Start Scaled Mass Index") +
+  annotate("text", x = 5, y = 1.2, label = "Ecotype: p<0.05\nTemp*Ecotype: p<0.05", hjust = 1, vjust = -1, size = 2, fontface = "bold")+
+  annotate("text", x = -Inf, y = Inf, label = "C", 
            hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
 SMI_Temp
 
 BodyCondP + SMI_AS + BodyCond_Temps + SMI_Temp
 
 
-# Effect of Temperature Directly on Condition -----------------------------
+## The effect of AS & temp on SMI by Pop ---------------------------------
 
-###### Does Temp influence performance metrics? Body Condition, HSI, GSI, SSI, fibrosis? Use tank density Temp a random effect. CCD = cumulative competitor days (i.e. density)
+
 {
-  complete_data <- End2[complete.cases(End2[c("BodyCond", "Temp", "Ecotype", "CCD", "Sex")]), ]
+  colnames(WK.all.dt.SMI)[3] <- "SL"
+  colnames(WK.all.dt.SMI)[4] <- "Mass"
+  
+  colnames(SL.all.dt.SMI)[3] <- "SL"
+  colnames(SL.all.dt.SMI)[4] <- "Mass"
+  
+  colnames(WT.all.dt.SMI)[3] <- "SL"
+  colnames(WT.all.dt.SMI)[4] <- "Mass"
+  
+  colnames(FG.all.dt.SMI)[3] <- "SL"
+  colnames(FG.all.dt.SMI)[4] <- "Mass"
+  
+  WK_all$SMI.ols <- WK.all.dt.SMI$SMI.ols
+  WK_all$SMI.rob <- WK.all.dt.SMI$SMI.rob
+  SL_all$SMI.ols <- SL.all.dt.SMI$SMI.ols
+  SL_all$SMI.rob <- SL.all.dt.SMI$SMI.rob
+  WT_all$SMI.ols <- WT.all.dt.SMI$SMI.ols
+  WT_all$SMI.rob <- WT.all.dt.SMI$SMI.rob
+  FG_all$SMI.ols <- FG.all.dt.SMI$SMI.ols
+  FG_all$SMI.rob <- FG.all.dt.SMI$SMI.rob
+  
+  data <- bind_rows(WK_all, SL_all, WT_all, FG_all)
+  
+  data <- left_join(data, ThermTol2[, c("CCD", "FishID")], by = "FishID")
+  
+  table(data$Pop)
+  is.na(data$SMI.rob)
+  
+  SMI_end <- left_join(data, End2[, c("CCD", "FishID")], by = "FishID")
+  SMI_end <- filter(SMI_end, Trial == "F")
+  SMI_start <- filter(data, Trial == "S")
+  
+  data$Temp <- as.factor(data$Temp)
+  
+  SMI_AS <- ggplot(data, aes(x=AS, y=SMI.rob, color=Pop)) +
+    geom_jitter(aes(color = Pop, group = Pop), 
+                position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+                size = 3, alpha = 0.2) +
+    geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+    theme_classic() +
+    #theme(legend.position = "none") +
+    scale_color_manual(values = c('black', 'blue', "grey", "lightblue")) +
+    labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = "Scaled Mass Index") +
+    annotate("text", x = -Inf, y = Inf, label = "A", 
+             hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+  SMI_AS
+}
+
+
+## Experiment start --------------------------------------------------------
+{
+  complete_data <- SMI_start[complete.cases(SMI_start[c("SMI.rob", "AS", "Pop")]), ]
   nrow(complete_data)
   
-  hist(complete_data$BodyCond)
-  shapiro.test(complete_data$BodyCond)
+  hist(complete_data$SMI.rob)
+  SMI.rob <- glm(SMI.rob ~ AS*Pop, data = complete_data)
+  summary(SMI.rob)
+}
+#                 Estimate Std. Error t value Pr(>|t|)    
+#   (Intercept)  5.1163804  0.4933076  10.372  < 2e-16 ***
+#   AS          -0.0019956  0.0005009  -3.984 0.000100 ***
+#   PopSL       -2.7494746  0.5415038  -5.077 9.92e-07 ***
+#   PopWK       -2.7766731  0.5752119  -4.827 3.05e-06 ***
+#   PopWT       -2.2468155  0.5406177  -4.156 5.11e-05 ***
+#   AS:PopSL     0.0024199  0.0005389   4.491 1.30e-05 ***
+#   AS:PopWK     0.0021334  0.0005510   3.872 0.000153 ***
+#   AS:PopWT     0.0019764  0.0005402   3.659 0.000337 ***
+# 
+# (Dispersion parameter for gaussian family taken to be 0.2371074)
+# 
+# Null deviance: 51.827  on 178  degrees of freedom
+# Residual deviance: 40.545  on 171  degrees of freedom
+# AIC: 260.17
+emtrends(SMI.rob, "Pop", var = "AS")
+# Pop  AS.trend       SE  df  lower.CL  upper.CL
+# FG  -2.00e-03 0.000501 171 -2.98e-03 -0.001007
+# SL   4.24e-04 0.000199 171  3.23e-05  0.000816
+# WK   1.38e-04 0.000229 171 -3.15e-04  0.000591
+# WT  -1.92e-05 0.000202 171 -4.18e-04  0.000380
+plot(SMI.rob)
+
+SMI_AS <- ggplot(complete_data, aes(x=AS, y=SMI.rob, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 1, alpha = 0.5) +
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  theme_classic() +
+  theme(plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual(values = c('blue', 'black', "grey", "lightblue3")) +
+  labs(x = expression(Experiment~Start~Aerobic~Scope~(mgO[2]/kg/hr)), y = "Experiment Start Scaled Mass Index") +
+  annotate("text", x = -Inf, y = Inf, label = "A", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+SMI_AS
+
+BodyCondP + SMI_AS
+
+{
+  complete_data <- SMI_start[complete.cases(SMI_start[c("SMI.rob", "Temp", "Pop")]), ]
+  nrow(complete_data)
+  
+  hist(complete_data$SMI.rob)
+  SMI.rob <- glm(SMI.rob ~ Temp*Pop, data = complete_data)
+  summary(SMI.rob)
+}
+#               Estimate Std. Error t value Pr(>|t|)    
+#   (Intercept) -1.21121    0.88696  -1.366 0.173865    
+#   Temp         0.21078    0.04223   4.991 1.47e-06 ***
+#   PopSL        4.70565    1.01685   4.628 7.28e-06 ***
+#   PopWK        3.75897    1.16530   3.226 0.001506 ** 
+#   PopWT        4.38132    1.00114   4.376 2.09e-05 ***
+#   Temp:PopSL  -0.24194    0.04809  -5.031 1.23e-06 ***
+#   Temp:PopWK  -0.21249    0.05385  -3.946 0.000116 ***
+#   Temp:PopWT  -0.22522    0.04705  -4.787 3.64e-06 ***
+# 
+# (Dispersion parameter for gaussian family taken to be 0.2294179)
+# 
+# Null deviance: 51.827  on 178  degrees of freedom
+# Residual deviance: 39.230  on 171  degrees of freedom
+# AIC: 254.27
+emtrends(SMI.rob, "Pop", var = "Temp")
+# Pop Temp.trend     SE  df lower.CL upper.CL
+# FG     0.21078 0.0422 171   0.1274   0.2941
+# SL    -0.03116 0.0230 171  -0.0766   0.0142
+# WK    -0.00172 0.0334 171  -0.0677   0.0642
+# WT    -0.01445 0.0207 171  -0.0554   0.0265
+plot(SMI.rob)
+
+SMI_Temp_Pop <- ggplot(complete_data, aes(x=as.factor(Temp), y=SMI.rob, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  theme_classic() +
+  #theme(legend.position = "none") +
+  scale_color_manual(values = c('blue', 'black', "grey", "lightblue2")) +
+  labs(x = expression("Temperature (\u00B0C)"), y = "Experiment Start Scaled Mass Index") +
+  annotate("text", x = -Inf, y = Inf, label = "D", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+SMI_Temp_Pop
+
+
+# Make Figures with SMI ---------------------------------------------------
+
+pdf(file = "NewSuppFig7.pdf",
+    width = 8,
+    height = 7)
+
+SMI_AS_start + SMI_AS_end + SMI_Temp + SMI_temp_end
+
+dev.off()
+
+# Effect of Temperature Directly on Condition -----------------------------
+
+
+{
+  complete_data <- SMI_end[complete.cases(SMI_end[c("SMI.rob", "Ecotype", "Pop")]), ]
+  nrow(complete_data)
+  
+  hist(complete_data$SMI.rob)
+  shapiro.test(complete_data$SMI.rob)
   complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
-  BodyCond <- lme(BodyCond ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
-  summary(BodyCond)
+  SMI.rob <- lme(SMI.rob ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(SMI.rob)
 }
 # Linear mixed-effects model fit by REML
 # Data: complete_data 
-# AIC       BIC   logLik
-# -54.44707 -32.57933 34.22354
+# AIC      BIC    logLik
+# 74.47807 89.48001 -30.23903
 # 
 # Random effects:
 #   Formula: ~1 | CCD
 # (Intercept)  Residual
-# StdDev:  0.09069957 0.1748278
+# StdDev:   0.0693352 0.3310659
 # 
-# Fixed effects:  BodyCond ~ Temp * Ecotype + Sex 
-#                         Value Std.Error  DF   t-value p-value
-# (Intercept)          0.3590912 0.3362246 152  1.068010  0.2872
-# Temp                 0.0298317 0.0153191 152  1.947359  0.0533
-# EcotypeBenthic       0.9604373 0.3974103 152  2.416740  0.0168
-# SexM                 0.2204428 0.0275546 152  8.000222  0.0000
-# Temp:EcotypeBenthic -0.0389242 0.0184628 152 -2.108253  0.0366
+# Fixed effects:  SMI.rob ~ Temp * Ecotype + Sex 
+#                           Value Std.Error DF   t-value p-value
+# (Intercept)          2.9709152 0.8199320 62  3.623368  0.0006
+# Temp                -0.0371838 0.0405619  1 -0.916716  0.5276
+# EcotypeBenthic      -0.0682592 0.9274850  1 -0.073596  0.9532
+# SexM                 0.5556066 0.0821052 62  6.767006  0.0000
+# Temp:EcotypeBenthic  0.0130177 0.0453555  1  0.287015  0.8221
 # Correlation: 
 #   (Intr) Temp   EctypB SexM  
-# Temp                -0.992                     
-# EcotypeBenthic      -0.769  0.774              
-# SexM                -0.189  0.152  0.156       
-# Temp:EcotypeBenthic  0.760 -0.776 -0.992 -0.152
+# Temp                -0.994                     
+# EcotypeBenthic      -0.872  0.870              
+# SexM                -0.181  0.131  0.094       
+# Temp:EcotypeBenthic  0.886 -0.892 -0.993 -0.102
 # 
 # Standardized Within-Group Residuals:
 #   Min          Q1         Med          Q3         Max 
-# -2.64423004 -0.63598217  0.01690286  0.65664318  2.71247241 
+# -2.55350839 -0.59407624  0.03858452  0.59393676  1.98425941 
 # 
-# Number of Observations: 173
-# Number of Groups: 17 
-slopes <- emtrends(BodyCond, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend     SE  df  lower.CL upper.CL
-# Limnetic    0.02983 0.0153 152 -0.000434   0.0601
-# Benthic    -0.00909 0.0117 152 -0.032199   0.0140
+# Number of Observations: 68
+# Number of Groups: 5 
+slopes <- emtrends(SMI.rob, "Ecotype", var = "Temp")
+# Ecotype  Temp.trend     SE df lower.CL upper.CL
+# Limnetic    -0.0372 0.0406  1   -0.553    0.478
+# Benthic     -0.0242 0.0205  1   -0.284    0.236
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
 # Confidence level used: 0.95 
 pairs(slopes)
-# contrast           estimate     SE  df t.ratio p.value
-# Limnetic - Benthic   0.0389 0.0185 152   2.108  0.0366
+# contrast           estimate     SE df t.ratio p.value
+# Limnetic - Benthic   -0.013 0.0454  1  -0.287  0.8221
 # 
 # Results are averaged over the levels of: Sex 
 # Degrees-of-freedom method: containment 
-plot(BodyCond)
+plot(SMI.rob)
 
-BodyCond <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Ecotype)) +
-  geom_jitter(aes(color = Ecotype, group = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
-  theme_classic() +
-  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
-  coord_cartesian(clip = 'off') +
-  scale_color_manual( values=c('black','blue'))+
-  labs(x = "Temperature (\u00B0C)", y = "Body Condition")+
-  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
-  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
-BodyCond
-
-BodyCondSex <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Sex)) +
-  geom_jitter(aes(color = Sex, group = Sex), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
-  theme_classic() +
-  theme(legend.position = "right", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
-  coord_cartesian(clip = 'off') +
-  scale_color_manual( values=c('black','blue'))+
-  labs(x = "Temperature (\u00B0C)", y = "Body Condition")+
-  geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
-  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
-BodyCondSex
-
-
-{
-  complete_data <- End2[complete.cases(End2[c("HSI", "Temp", "Ecotype", "CCD", "Sex")]), ]
-  nrow(complete_data)
-  
-  hist(complete_data$HSI)
-  HSI <- lme(HSI ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
-  summary(HSI)
-}
-# Linear mixed-effects model fit by REML
-# Data: complete_data 
-# AIC      BIC    logLik
-# 640.1442 661.9281 -313.0721
-# 
-# Random effects:
-#   Formula: ~1 | CCD
-# (Intercept) Residual
-# StdDev:   0.8593782 1.399091
-# 
-# Fixed effects:  HSI ~ Temp * Ecotype + Sex 
-#                         Value Std.Error  DF    t-value p-value
-# (Intercept)           4.862056  2.273721 150  2.1383695  0.0341
-# Temp                  0.039566  0.104260 150  0.3794964  0.7049
-# EcotypeLimnetic      -2.629109  3.505910 150 -0.7499080  0.4545
-# SexM                 -0.479119  0.222071 150 -2.1575049  0.0326
-# Temp:EcotypeLimnetic  0.103714  0.164244 150  0.6314668  0.5287
-# Correlation: 
-#   (Intr) Temp   EctypL SexM  
-# Temp                 -0.990                     
-# EcotypeLimnetic      -0.526  0.537              
-# SexM                 -0.003 -0.039 -0.158       
-# Temp:EcotypeLimnetic  0.528 -0.549 -0.993  0.153
-# 
-# Standardized Within-Group Residuals:
-#   Min          Q1         Med          Q3         Max 
-# -3.07361304 -0.66933307 -0.09814904  0.69956598  3.07538879 
-# 
-# Number of Observations: 171
-# Number of Groups: 17 
-
-slopes <- emtrends(HSI, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend    SE  df lower.CL upper.CL
-# Benthic      0.0396 0.104 150   -0.166    0.246
-# Limnetic     0.1433 0.138 150   -0.129    0.416
-# 
-# Results are averaged over the levels of: Sex 
-# Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
-plot(HSI)
-
-HSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Ecotype)) +
+SMI.rob <- ggplot(complete_data, aes(x=as.factor(Temp), y=SMI.rob, color=Ecotype)) +
   geom_jitter(aes(color = Ecotype, group = Ecotype), 
               position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
               size = 3, alpha = 0.2) +
@@ -2078,142 +2310,25 @@ HSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Ecotype)) +
   theme(plot.margin = margin(1.1, .4, .4, .4, "cm")) +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('black','blue'))+
+  labs(x = "Temperature (\u00B0C)", y = "Scaled Mass Index")+
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
-  labs(x = "Temperature (\u00B0C)", y = expression(HSI))+
-  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
-HSI
+  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
+SMI.rob
 
-HSISex <- ggplot(complete_data, aes(x=as.factor(Temp), y=HSI, color=Sex)) +
+SMI.robSex <- ggplot(complete_data, aes(x=as.factor(Temp), y=SMI.rob, color=Sex)) +
   geom_jitter(aes(color = Sex, group = Sex), 
               position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +  theme_classic() +
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "right", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('black','blue'))+
+  labs(x = "Temperature (\u00B0C)", y = "Scaled Mass Index")+
   geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
-  labs(x = "Temperature (\u00B0C)", y = expression(HSI))+
-  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-HSISex
+  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
+SMI.robSex
 
-
-{
-  complete_data <- End2[complete.cases(End2[c("GSI", "Temp", "Ecotype", "CCD", "Sex")]), ]
-  nrow(complete_data)
-  
-  hist(complete_data$GSI)
-  GSI <- lme(GSI ~ Temp*Ecotype, random = ~ 1 | CCD, data = complete_data)
-  summary(GSI)
-}
-# Linear mixed-effects model fit by REML
-# Data: complete_data 
-# AIC       BIC   logLik
-# -34.93656 -21.03163 23.46828
-# 
-# Random effects:
-#   Formula: ~1 | CCD
-# (Intercept)  Residual
-# StdDev:   0.1016333 0.1438734
-# 
-# Fixed effects:  GSI ~ Temp * Ecotype 
-#                             Value Std.Error DF    t-value p-value
-# (Intercept)           0.28649545 0.3167809 60  0.9043961  0.3694
-# Temp                 -0.00049958 0.0143268 60 -0.0348704  0.9723
-# EcotypeLimnetic      -0.28888097 0.5001082 60 -0.5776369  0.5657
-# Temp:EcotypeLimnetic  0.01584557 0.0234527 60  0.6756401  0.5019
-# Correlation: 
-#   (Intr) Temp   EctypL
-# Temp                 -0.992              
-# EcotypeLimnetic      -0.561  0.561       
-# Temp:EcotypeLimnetic  0.547 -0.557 -0.993
-# 
-# Standardized Within-Group Residuals:
-#   Min         Q1        Med         Q3        Max 
-# -1.7148280 -0.6691286 -0.1769502  0.5501603  2.2241670 
-# 
-# Number of Observations: 79
-# Number of Groups: 16 
-emtrends(GSI, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend     SE df lower.CL upper.CL
-# Benthic     -0.0005 0.0143 60  -0.0292   0.0282
-# Limnetic     0.0153 0.0195 60  -0.0237   0.0544
-# 
-# Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
-plot(GSI)
-
-GSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=GSI, color=Ecotype)) +
-  geom_jitter(aes(color = Ecotype, group = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  scale_color_manual( values=c('black','blue'))+
-  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
-  labs(x = "Temperature (\u00B0C)", y = expression(GSI))+
-  annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold") 
-GSI
-
-{
-  complete_data <- End2[complete.cases(End2[c("SSI", "Temp", "Ecotype", "CCD", "Sex")]), ]
-  nrow(complete_data)
-  
-  hist(complete_data$SSI)
-  SSI <- lme(SSI ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
-  summary(SSI)
-}
-# Linear mixed-effects model fit by REML
-# Data: complete_data 
-# AIC       BIC   logLik
-# -344.5849 -323.0151 179.2925
-# 
-# Random effects:
-#   Formula: ~1 | CCD
-# (Intercept)   Residual
-# StdDev: 0.008375683 0.07319862
-# 
-# Fixed effects:  SSI ~ Temp * Ecotype + Sex 
-#                           Value  Std.Error  DF    t-value p-value
-# (Intercept)           0.16028067 0.06287392 145  2.5492392  0.0118
-# Temp                 -0.00148126 0.00287941 145 -0.5144322  0.6077
-# EcotypeLimnetic       0.02442189 0.10931135 145  0.2234158  0.8235
-# SexM                 -0.02590979 0.01161944 145 -2.2298666  0.0273
-# Temp:EcotypeLimnetic  0.00042133 0.00509331 145  0.0827231  0.9342
-# Correlation: 
-#   (Intr) Temp   EctypL SexM  
-# Temp                 -0.988                     
-# EcotypeLimnetic      -0.566  0.576              
-# SexM                 -0.019 -0.070 -0.175       
-# Temp:EcotypeLimnetic  0.551 -0.571 -0.994  0.178
-# 
-# Standardized Within-Group Residuals:
-#   Min         Q1        Med         Q3        Max 
-# -1.2695439 -0.6049009 -0.1958677  0.3002341  7.7166816 
-# 
-# Number of Observations: 166
-# Number of Groups: 17 
-emtrends(SSI, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend      SE  df lower.CL upper.CL
-# Benthic    -0.00148 0.00288 145 -0.00717  0.00421
-# Limnetic   -0.00106 0.00418 145 -0.00933  0.00721
-# 
-# Results are averaged over the levels of: Sex 
-# Degrees-of-freedom method: containment 
-# Confidence level used: 0.95 
-plot(SSI)
-
-SSI <- ggplot(complete_data, aes(x=as.factor(Temp), y=GSI, color=Ecotype)) +
-  geom_jitter(aes(color = Ecotype, group = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
-  theme_classic() +
-  theme(legend.position = "none") +
-  scale_color_manual( values=c('black','blue'))+
-  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
-  labs(x = "Temperature (\u00B0C)", y = expression(SSI))+
-  annotate("text", x = -Inf, y = Inf, label = "D", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-SSI
-
-
-BodyCond + HSI + GSI + SSI + FibPres + FibSev + plot_layout(ncol = 2)
-
+BodyCond + SMI.rob
 
 # Change BC by ecotype ----------------------------------------------------
 
@@ -2322,7 +2437,7 @@ pdf(file = "Figure2.pdf",
     width = 8.5,
     height = 4)
 
-p1 + p2 + ChangeBC
+p1 + p2
 
 dev.off()
 
