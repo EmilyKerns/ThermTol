@@ -80,7 +80,7 @@ plot_data <- complete_data %>%
 FibPres <- ggplot(plot_data, aes(x = Temp_num, y = Fibrosis_num, color = Ecotype)) +
   geom_jitter(height = 0.03, alpha = 0.4, size = 1.5) +
   geom_smooth(method = "glm", method.args = list(family = "binomial"), se = TRUE) +
-  labs(x = "Temperature (°C)", y = "Probability of Fibrosis", color = "Ecotype", tag = "E") +
+  labs(x = "Temperature (°C)", y = "Probability of Fibrosis", color = "Ecotype", tag = "D") +
   scale_x_continuous(breaks = c(18, 20, 22, 24, 26)) +
   scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
   scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
@@ -158,11 +158,11 @@ FibSev <- ggplot(complete_data, aes(x = Temp, y = FibrosisScore, color = Ecotype
   stat_summary(fun.data = mean_se,
                geom = "errorbar", width = 0.2, linewidth = 1,
                position = position_dodge(width = 0.5)) +
-  labs(x = "Temperature", y = "Fibrosis Score", tag = "F") +
+  labs(x = "Temperature", y = "Fibrosis Score", tag = "E") +
   scale_color_manual(values = c("Benthic" = "black", "Limnetic" = "blue")) +
   theme_classic()+
   theme(plot.tag = element_text(size = 15, face = "bold"),
-        plot.tag.position = c(0.02, .98))
+        plot.tag.position = c(0.02, .98), legend.position = "none")
 FibSev
 
 
@@ -170,7 +170,7 @@ FibSev
 
 # Hypothesis 2: Resp ~ Fibrosis + Ecotype -------------------------------------------
 
-### Both fibrosis presence and severity affect SMR, MMR, and AS
+
 
 ## Assess the effects of fibrosis on MMR ----------------------------
 
@@ -558,13 +558,13 @@ MMRfib+ SMRfib + ASfib
 dev.off()
 
 pdf(file = "NewSuppFig4.pdf",
-    width = 6.5, 
-    height = 4)
+    width = 7, 
+    height = 7.5)
 
-MMRFibSev + SMRFibSev + ASFibSev
+MMRFibSev + SMRFibSev + ASFibSev + FibPres + FibSev
 
 dev.off()
-http://144.92.58.154:8787/graphics/00173552-221d-4853-a3b3-2f65d9f85915.png
+
 # Hypothesis 2: BC ~ Fibrosis ---------------------------------------------
 
 BCEnd.fib.q.i <- lm(BodyCond ~ I(Temp^2)*Ecotype*Fibrosis + Temp*Ecotype*Fibrosis + Sex, data = End)
