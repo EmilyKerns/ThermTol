@@ -1,5 +1,5 @@
 # OCLTTH Prediction 4 - Effect of AS on condition metrics
-# Figure 5, supplemental figures 2 & 5-7
+# Figure 5, Supplemental Figures 2-3 & 5-7
 # Effect of temperature directly on condition metrics
 
 
