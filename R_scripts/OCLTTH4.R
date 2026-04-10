@@ -8,11 +8,15 @@
 
 ## Start of experiment -------------------------------------------------------
 
+### Fulton's K Body Condition -------------------------------------------------------
 
-###### Does AS influence performance metrics? Body Condition?
+
+#### Does AS influence Body Condition (by ecotype)? ------------------
+
+
 {
   complete_data <- Start[complete.cases(Start[c("BodyCond", "AS", "Ecotype")]), ]
-  nrow(complete_data)
+  nrow(complete_data) # 183
   
   hist(complete_data$BodyCond)
   shapiro.test(complete_data$BodyCond)
@@ -30,31 +34,34 @@
 # Null deviance: 7.9080  on 182  degrees of freedom
 # Residual deviance: 7.6525  on 179  degrees of freedom
 # AIC: -51.593
-emtrends(BodyCond, "Ecotype", var = "AS")
+slopes <- emtrends(BodyCond, "Ecotype", var = "AS")
 # Ecotype   AS.trend       SE  df  lower.CL upper.CL
 # Limnetic  0.000058 5.73e-05 179 -5.51e-05 1.71e-04
 # Benthic  -0.000133 7.49e-05 179 -2.81e-04 1.47e-05
+pairs(slopes)
+# contrast           estimate       SE  df t.ratio p.value
+# Limnetic - Benthic 0.000191 9.43e-05 179   2.026  0.0442
 
 plot(BodyCond)
 
 BodyCondP <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Ecotype)) +
-  geom_jitter(aes(color = Ecotype, group = Ecotype), 
-              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
-              size = 3, alpha = 0.2) +
+  geom_point(size = 0.5) +
   theme_classic() +
-  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm"), axis.title = element_text(size = 10)) +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('blue','black'))+
-  labs(x = expression(Post~Acclimation~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Post~Acclimation~Body~Condition))+
+  labs(x = expression(Experiment~Start~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Experiment~Start~Body~Condition))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
-  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")+
-  annotate("text", x = 1800, y = .0017, label = "Ecotype: p<0.05\nAS*Ecotype: p<0.05", hjust = 1, vjust = -1, size = 2, fontface = "bold")
+  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")+
+  annotate("text", x = 2200, y = .85, label = "Ecotype: p<0.05\nAS*Ecotype: p<0.05", hjust = 1, vjust = 1, size = 2, fontface = "bold")
 BodyCondP
 
+#### Does temperature directly influence Body Condition (by ecotype)? ------------------
 
 {
-  complete_data <- Start[complete.cases(Start[c("BodyCond", "Temp", "Ecotype")]), ]
-  nrow(complete_data)
+  # temperature is not treated as a factor, not dropping outliers or mortalities from during respirometry measurements
+  complete_data <- Start2[complete.cases(Start2[c("BodyCond", "Temp", "Ecotype")]), ]
+  nrow(complete_data) # 208
   
   hist(complete_data$BodyCond)
   shapiro.test(complete_data$BodyCond)
@@ -62,20 +69,24 @@ BodyCondP
   BodyCond <- glm(BodyCond ~ Temp*Ecotype, data = complete_data)
   summary(BodyCond)
 }
-# Coefficients:
-#                       Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)          1.444126   0.176664   8.174 5.27e-14 ***
-# Temp                -0.011514   0.008057  -1.429   0.1547    
-# EcotypeBenthic      -0.377904   0.247090  -1.529   0.1279    
-# Temp:EcotypeBenthic  0.019233   0.011256   1.709   0.0893 .  
+#                      Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)          1.339301   0.174826   7.661 7.32e-13 ***
+# Temp                -0.006805   0.007893  -0.862    0.390    
+# EcotypeBenthic      -0.334886   0.242344  -1.382    0.169    
+# Temp:EcotypeBenthic  0.017784   0.010934   1.627    0.105    
 # 
-# Null deviance: 7.9080  on 182  degrees of freedom
-# Residual deviance: 7.7019  on 179  degrees of freedom
-# AIC: -50.415
-emtrends(BodyCond, "Ecotype", var = "Temp")
-# Ecotype  Temp.trend       SE  df  lower.CL upper.CL
-# Limnetic   -0.01151 0.00806 179 -0.02741  0.00438
-# Benthic     0.00772 0.00786 179 -0.00779  0.02323
+# (Dispersion parameter for gaussian family taken to be 0.04808878)
+# 
+# Null deviance: 10.1115  on 207  degrees of freedom
+# Residual deviance:  9.8101  on 204  degrees of freedom
+# AIC: -34.979
+slopes <- emtrends(BodyCond, "Ecotype", var = "Temp")
+# Ecotype  Temp.trend      SE  df lower.CL upper.CL
+# Limnetic   -0.00681 0.00789 204 -0.02237  0.00876
+# Benthic     0.01098 0.00757 204 -0.00394  0.02590
+pairs(slopes)
+# contrast           estimate     SE  df t.ratio p.value
+# Limnetic - Benthic  -0.0178 0.0109 204  -1.627  0.1054
 plot(BodyCond)
 
 BodyCond_Temps <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Ecotype)) +
@@ -87,10 +98,127 @@ BodyCond_Temps <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('blue','black'))+
   labs(x = "Temperature (\u00B0C)", 
-       y = "Post Acclimation Body Condition")+
+       y = "Experiment Start Body Condition")+
   geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
-  annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
+  annotate("text", x = -Inf, y = Inf, label = "C", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
 BodyCond_Temps
+
+
+
+#### Does AS influence Fulton's K Body Condition (by population)? ------------------
+{
+  complete_data <- Start[complete.cases(Start[c("BodyCond", "AS", "Pop")]), ]
+  nrow(complete_data) #183
+  
+  hist(complete_data$BodyCond)
+  BodyCond <- glm(BodyCond ~ AS*Pop, data = complete_data)
+  summary(BodyCond)
+}
+#                   Estimate Std. Error t value Pr(>|t|)    
+#   (Intercept)  1.7903241  0.1831811   9.774  < 2e-16 ***
+#   AS          -0.0005071  0.0001814  -2.795 0.005766 ** 
+#   PopSL       -0.6739603  0.1995958  -3.377 0.000904 ***
+#   PopWK       -0.7562845  0.2200382  -3.437 0.000735 ***
+#   PopWT       -0.5312568  0.2034846  -2.611 0.009817 ** 
+#   AS:PopSL     0.0006125  0.0001950   3.140 0.001981 ** 
+#   AS:PopWK     0.0005775  0.0002046   2.823 0.005314 ** 
+#   AS:PopWT     0.0004619  0.0001983   2.330 0.020965 *  
+# 
+# (Dispersion parameter for gaussian family taken to be 0.04026403)
+# 
+# Null deviance: 7.9080  on 182  degrees of freedom
+# Residual deviance: 7.0462  on 175  degrees of freedom
+# AIC: -58.699
+slopes <- emtrends(BodyCond, "Pop", var = "AS")
+# Pop  AS.trend       SE  df  lower.CL  upper.CL
+# FG  -5.07e-04 1.81e-04 175 -8.65e-04 -0.000149
+# SL   1.05e-04 7.16e-05 175 -3.59e-05  0.000247
+# WK   7.04e-05 9.46e-05 175 -1.16e-04  0.000257
+# WT  -4.52e-05 8.00e-05 175 -2.03e-04  0.000113
+pairs(slopes)
+# contrast  estimate       SE  df t.ratio p.value
+# FG - SL  -0.000612 0.000195 175  -3.140  0.0106
+# FG - WK  -0.000577 0.000205 175  -2.823  0.0270
+# FG - WT  -0.000462 0.000198 175  -2.330  0.0953
+# SL - WK   0.000035 0.000119 175   0.295  0.9910
+# SL - WT   0.000151 0.000107 175   1.403  0.4989
+# WK - WT   0.000116 0.000124 175   0.934  0.7869
+# 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
+plot(BodyCond)
+
+BodyCondPops <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Pop)) +
+  geom_point(size = 0.5) +
+  theme_classic() +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
+  labs(x = expression(Experiment~Start~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Experiment~Start~Body~Condition))+
+  geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
+  annotate("text", x = -Inf, y = Inf, label = "A", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+BodyCondPops
+
+#### Does temperature influence Fulton's K Body Condition (by population)? ------------------
+{
+  # temp is not a factor, using all fish
+  complete_data <- Start2[complete.cases(Start2[c("BodyCond", "Temp", "Pop")]), ]
+  nrow(complete_data) # 208
+  
+  hist(complete_data$BodyCond)
+  BodyCond <- glm(BodyCond ~ Temp*Pop, data = complete_data)
+  summary(BodyCond)
+}
+#               Estimate Std. Error t value Pr(>|t|)    
+#   (Intercept)  0.30235    0.27688   1.092 0.276144    
+#   Temp         0.04648    0.01252   3.713 0.000265 ***
+#   PopSL        1.06532    0.33987   3.135 0.001980 ** 
+#   PopWK        0.82217    0.41607   1.976 0.049525 *  
+#   PopWT        1.03718    0.33833   3.066 0.002472 ** 
+#   Temp:PopSL  -0.05282    0.01540  -3.430 0.000733 ***
+#   Temp:PopWK  -0.04750    0.01862  -2.551 0.011475 *  
+#   Temp:PopWT  -0.05245    0.01527  -3.434 0.000722 ***
+# 
+# (Dispersion parameter for gaussian family taken to be 0.04321741)
+# 
+# Null deviance: 10.1115  on 207  degrees of freedom
+# Residual deviance:  8.6435  on 200  degrees of freedom
+# AIC: -53.314
+
+
+slopes <- emtrends(BodyCond, "Pop", var = "Temp")
+# Pop Temp.trend      SE  df lower.CL upper.CL
+# FG     0.04648 0.01250 200   0.0218   0.0712
+# SL    -0.00634 0.00897 200  -0.0240   0.0113
+# WK    -0.00103 0.01380 200  -0.0282   0.0262
+# WT    -0.00598 0.00875 200  -0.0232   0.0113
+pairs(slopes)
+# contrast  estimate     SE  df t.ratio p.value
+# FG - SL   0.052815 0.0154 200   3.430  0.0041
+# FG - WK   0.047502 0.0186 200   2.551  0.0553
+# FG - WT   0.052454 0.0153 200   3.434  0.0040
+# SL - WK  -0.005313 0.0164 200  -0.323  0.9883
+# SL - WT  -0.000361 0.0125 200  -0.029  1.0000
+# WK - WT   0.004952 0.0163 200   0.303  0.9903
+# 
+# P value adjustment: tukey method for comparing a family of 4 estimates 
+
+plot(BodyCond)
+
+BodyCond_TempsPop <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Pop)) +
+  geom_jitter(aes(color = Pop, group = Pop), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('blue','black', "grey", "lightblue2"))+
+  labs(x = "Temperature (\u00B0C)", 
+       y = "Experiment Start Body Condition")+
+  geom_smooth(aes(group = Pop), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "C", 
+           hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+BodyCond_TempsPop
 
 
 
@@ -98,10 +226,14 @@ BodyCond_Temps
 
 
 
-###### Does AS influence performance metrics? Body Condition, HSI, GSI, SSI, fibrosis? Use tank density as a random effect. CCD = cumulative competitor days (i.e. density)
+### Fulton's K Body Condition -------------------------------------------------------
+
+
+#### Does AS influence Body Condition (by ecotype)? ------------------
+
 {
 complete_data <- End[complete.cases(End[c("BodyCond", "AS", "Ecotype", "CCD", "Sex")]), ]
-nrow(complete_data)
+nrow(complete_data) #69
 
 hist(complete_data$BodyCond)
 shapiro.test(complete_data$BodyCond)
@@ -152,26 +284,151 @@ pairs(slopes)
 # Limnetic - Benthic -0.000232 0.000103 61  -2.254  0.0278
 plot(BodyCond)
 
-BodyCond <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Ecotype)) +
+BodyCondEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Ecotype)) +
   geom_point(size = 0.5) +
   theme_classic() +
-  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  theme(plot.margin = margin(1.1, .4, .4, .4, "cm"), axis.title = element_text(size = 10)) +
   coord_cartesian(clip = 'off') +
   scale_color_manual( values=c('black','blue'))+
-  labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Body~Condition))+
+  labs(x = expression(Experiment~End~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Experiment~End~Body~Condition))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
-  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")+
-  annotate("text", x = 2200, y = .0016, label = "AS*Ecotype: p<0.05", hjust = 1, vjust = -1, size = 2, fontface = "bold")
-BodyCond
+  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")+
+  annotate("text", x = 2200, y = .8, label = "AS*Ecotype: p<0.05", hjust = 1, vjust = 1, size = 2, fontface = "bold")
+BodyCondEnd
 
-BodyCondSex <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Sex)) +
+BodyCondSexEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Sex)) +
   geom_point(size = 0.5) +
   theme_classic() +
+  theme(legend.position = "none")+
   scale_color_manual( values=c('black','blue'))+
   labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Body~Condition))+
   geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
   annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
-BodyCondSex
+BodyCondSexEnd
+
+#### Does temperature directly influence Body Condition (by ecotype)? ------------------
+
+{
+  complete_data <- End2[complete.cases(End2[c("BodyCond", "Temp", "Ecotype", "CCD", "Sex")]), ]
+  nrow(complete_data) #173
+  
+  hist(complete_data$BodyCond)
+  shapiro.test(complete_data$BodyCond)
+  complete_data$Ecotype <- relevel(factor(complete_data$Ecotype), "Limnetic")
+  BodyCond <- lme(BodyCond ~ Temp*Ecotype + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(BodyCond)
+}
+# Linear mixed-effects model fit by REML
+# Data: complete_data 
+# AIC       BIC   logLik
+# -54.44707 -32.57933 34.22354
+# 
+# Random effects:
+#   Formula: ~1 | CCD
+# (Intercept)  Residual
+# StdDev:  0.09069957 0.1748278
+# 
+# Fixed effects:  BodyCond ~ Temp * Ecotype + Sex 
+#                         Value Std.Error  DF   t-value p-value
+# (Intercept)          0.3590912 0.3362246 152  1.068010  0.2872
+# Temp                 0.0298317 0.0153191 152  1.947359  0.0533
+# EcotypeBenthic       0.9604373 0.3974103 152  2.416740  0.0168
+# SexM                 0.2204428 0.0275546 152  8.000222  0.0000
+# Temp:EcotypeBenthic -0.0389242 0.0184628 152 -2.108253  0.0366
+# Correlation: 
+#   (Intr) Temp   EctypB SexM  
+# Temp                -0.992                     
+# EcotypeBenthic      -0.769  0.774              
+# SexM                -0.189  0.152  0.156       
+# Temp:EcotypeBenthic  0.760 -0.776 -0.992 -0.152
+# 
+# Standardized Within-Group Residuals:
+#   Min          Q1         Med          Q3         Max 
+# -2.64423004 -0.63598217  0.01690286  0.65664318  2.71247241 
+# 
+# Number of Observations: 173
+# Number of Groups: 17 
+slopes <- emtrends(BodyCond, "Ecotype", var = "Temp")
+# Ecotype  Temp.trend     SE  df  lower.CL upper.CL
+# Limnetic    0.02983 0.0153 152 -0.000434   0.0601
+# Benthic    -0.00909 0.0117 152 -0.032199   0.0140
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+# Confidence level used: 0.95 
+pairs(slopes)
+# contrast           estimate     SE  df t.ratio p.value
+# Limnetic - Benthic   0.0389 0.0185 152   2.108  0.0366
+# 
+# Results are averaged over the levels of: Sex 
+# Degrees-of-freedom method: containment 
+plot(BodyCond)
+
+BodyCondTempEnd <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Ecotype)) +
+  geom_jitter(aes(color = Ecotype, group = Ecotype), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('black','blue'))+
+  labs(x = "Temperature (\u00B0C)", y = "Body Condition")+
+  geom_smooth(aes(group = Ecotype), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
+BodyCondTempEnd
+
+BodyCondTempSex <- ggplot(complete_data, aes(x=as.factor(Temp), y=BodyCond, color=Sex)) +
+  geom_jitter(aes(color = Sex, group = Sex), 
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.5), 
+              size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "right", plot.margin = margin(1.1, .4, .4, .4, "cm")) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('black','blue'))+
+  labs(x = "Temperature (\u00B0C)", y = "Body Condition")+
+  geom_smooth(aes(group = Sex), method = "lm", linewidth = .5, alpha = 0.2) +
+  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = -1, size = 5, fontface = "bold")
+BodyCondTempSex
+
+#### Does AS influence Fulton's K Body Condition (by population)? ------------------
+
+{
+  complete_data <- End[complete.cases(End[c("BodyCond", "AS", "Pop", "CCD", "Sex")]), ]
+  nrow(complete_data) #69
+  
+  hist(complete_data$BodyCond)
+  shapiro.test(complete_data$BodyCond)
+  BodyCond <- lme(BodyCond ~ AS*Pop + Sex, random = ~ 1 | CCD, data = complete_data)
+  summary(BodyCond)
+}
+
+slopes <- emtrends(BodyCond, "Pop", var = "AS")
+
+pairs(slopes)
+
+plot(BodyCond)
+
+BodyCondPopEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Pop)) +
+  geom_point(size = 0.5) +
+  theme_classic() +
+  theme(plot.margin = margin(1.1, .4, .4, .4, "cm"), axis.title = element_text(size = 10)) +
+  coord_cartesian(clip = 'off') +
+  scale_color_manual( values=c('black','blue', "grey", "lightblue2"))+
+  labs(x = expression(Experiment~End~Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Experiment~End~Body~Condition))+
+  geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
+  annotate("text", x = -Inf, y = Inf, label = "B", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+  # annotate("text", x = 2200, y = .8, label = "AS*Ecotype: p<0.05", hjust = 1, vjust = 1, size = 2, fontface = "bold")
+BodyCondPopEnd
+
+BodyCondSexEnd <- ggplot(complete_data, aes(x=AS, y=BodyCond, color=Sex)) +
+  geom_point(size = 0.5) +
+  theme_classic() +
+  theme(legend.position = "none")+
+  scale_color_manual( values=c('black','blue'))+
+  labs(x = expression(Aerobic~Scope~(mgO[2]/kg/hr)), y = expression(Body~Condition))+
+  geom_smooth(method = "lm", linewidth = 0.5, alpha = .2) +
+  annotate("text", x = -Inf, y = Inf, label = "A", hjust = -0.5, vjust = 1, size = 5, fontface = "bold")
+BodyCondSexEnd
 
 
 {
