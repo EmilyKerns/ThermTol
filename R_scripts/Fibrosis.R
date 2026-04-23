@@ -114,7 +114,7 @@ summary(FibSevA)
 # Number of groups:  CCD 17 
 # 
 # Coefficients:
-#   Estimate Std. Error z value Pr(>|z|)
+#                       Estimate Std. Error z value Pr(>|z|)
 # Temp                  0.03816    0.09604   0.397    0.691
 # EcotypeLimnetic       1.84465    7.83332   0.235    0.814
 # Temp:EcotypeLimnetic -0.06859    0.28020  -0.245    0.807
@@ -212,6 +212,9 @@ emmeans(MMREndQ.fib,~Fibrosis)
 
 (1461-1137)/1461 #0.2217659 == 22% decrease in MMR in fish that fibrosed
 
+# extract residuals for plotting
+End$MMRPres_Resid <- resid(MMREndQ.fib)
+
 # Did one ecotype fibrose more often than another?
 #Use full dataset. Some fish may have been excluded earlier, but their fibrosis data still addresses ecotype differences
 Fib.data <- read_xlsx('/home/ekerns/ThermTol/RawData/ThermalToleranceProject_OG.xlsx')
@@ -295,7 +298,8 @@ PermTest(MMREndQ.fibS, B = 10000)
 # Sex            0.6725
 # FibrosisScore  0.0256
 
-
+# extract residuals for plotting
+End$MMRSev_Resid <- resid(MMREndQ.fibS)
 
 
 ## Assess the effects of fibrosis on SMR ----------------------------
@@ -329,7 +333,8 @@ emmeans(RMREndQ.a,~Fibrosis)
 
 (574-457)/574 #0.2038328 == 20% decrease in SMR in fish that fibrosed
 
-
+# extract residuals for plotting
+End$SMRPres_Resid <- resid(RMREndQ.a)
 
 SMREndQ.fibS <- lm(RMR ~ I(Temp^2) + Temp + Ecotype + Sex + FibrosisScore, data = End)
 plot(SMREndQ.fibS)
@@ -366,6 +371,9 @@ PermTest(SMREndQ.fibS, B = 10000)
 # Sex            0.0959
 # FibrosisScore  0.0071
 
+# extract residuals for plotting
+End$SMRSev_Resid <- resid(SMREndQ.fibS)
+
 
 ## Assess the effects of fibrosis on AS ----------------------------
 
@@ -398,6 +406,9 @@ emmeans(ASEndQ.fib,~Fibrosis)
 # Confidence level used: 0.95 
 
 (892-693)/693 #0.2871573, ~29% decrease with fibrosis
+
+# extract residuals for plotting
+End$ASPres_Resid <- resid(ASEndQ.fib)
 
 
 ASEndQ.fibS <- lm(AS ~ I(Temp^2) + Temp+  Ecotype + FibrosisScore, data = End)
@@ -434,6 +445,10 @@ PermTest(ASEndQ.fibS, B = 10000)
 # FibrosisScore  0.1284
 
 
+# extract residuals for plotting
+End$ASSev_Resid <- resid(ASEndQ.fibS)
+
+
 ## Make figure -------------------------------------------------------------
 
 End$Fibrosis <- as.factor(End$Fibrosis)
@@ -441,31 +456,75 @@ End$Fibrosis
 
 FibLabels <- c("Absent", "Present")
 
-ASfib <- ggplot(End, aes(x=Fibrosis, y=AS, color=Ecotype)) +
+ASfib_Res <- ggplot(End, aes(x=Fibrosis, y=ASPres_Resid, color=Ecotype)) +
   geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
+  geom_jitter(aes(color = Ecotype, shape = as.factor(Temp)), position = position_jitterdodge(jitter.width = .1, dodge.width = .8), size = 3, alpha = 0.2) +
   theme_classic() +
   theme(plot.tag = element_text(size = 15, face = "bold"),
         plot.tag.position = c(0.02, .98))+
   scale_color_manual(values = c('black', "blue")) +
-  geom_segment(aes(x = 1, xend = 2, y = max(End$AS, na.rm=TRUE) * 1.05, 
-                   yend = max(End$AS, na.rm=TRUE) * 1.05), 
+  geom_segment(aes(x = 1, xend = 2, y = max(ASPres_Resid, na.rm=TRUE) * 1.05,
+                   yend = max(ASPres_Resid, na.rm=TRUE) * 1.05),
                color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 1, xend = 1, y = max(End$AS, na.rm=TRUE) * 1.05, 
-                   yend = max(End$AS, na.rm=TRUE) * 1.03), 
+  geom_segment(aes(x = 1, xend = 1, y = max(ASPres_Resid, na.rm=TRUE) * 1.05,
+                   yend = max(ASPres_Resid, na.rm=TRUE) * 1.03),
                color = "black", inherit.aes = FALSE) +
-  geom_segment(aes(x = 2, xend = 2, y = max(End$AS, na.rm=TRUE) * 1.05, 
-                   yend = max(End$AS, na.rm=TRUE) * 1.03), 
+  geom_segment(aes(x = 2, xend = 2, y = max(ASPres_Resid, na.rm=TRUE) * 1.05,
+                   yend = max(ASPres_Resid, na.rm=TRUE) * 1.03),
+               color = "black", inherit.aes = FALSE) +
+  annotate("text", x = 1.5, y = max(ASPres_Resid, na.rm=TRUE) * 1.07, label = "*", size = 6) +
+  scale_x_discrete(labels= FibLabels) +
+  labs(x = "Fibrosis", y = expression(AS~Residuals), tag = "C")
+ASfib_Res
+
+ASfib <- ggplot(End, aes(x=Fibrosis, y=AS, color=Ecotype)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Ecotype, shape = as.factor(Temp)), position = position_jitterdodge(jitter.width = .1, dodge.width = .8), size = 3, alpha = 0.2) +
+  theme_classic(base_size = 14) +
+  theme(plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98))+
+  scale_color_manual(values = c('black', "blue")) +
+  geom_segment(aes(x = 1, xend = 2, y = max(End$AS, na.rm=TRUE) * 1.05,
+                   yend = max(End$AS, na.rm=TRUE) * 1.05),
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 1, xend = 1, y = max(End$AS, na.rm=TRUE) * 1.05,
+                   yend = max(End$AS, na.rm=TRUE) * 1.03),
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 2, xend = 2, y = max(End$AS, na.rm=TRUE) * 1.05,
+                   yend = max(End$AS, na.rm=TRUE) * 1.03),
                color = "black", inherit.aes = FALSE) +
   annotate("text", x = 1.5, y = max(End$AS, na.rm=TRUE) * 1.07, label = "*", size = 6) +
   scale_x_discrete(labels= FibLabels) +
-  labs(x = "Fibrosis", y = expression(Aerobic~Scope~(mgO[2]/kg/hr)), tag = "C")
+  labs(x = "Fibrosis", y = expression(Aerobic~Scope~(mgO[2]/kg/hr)), tag = "C", shape = expression("Temperature"*degree*C))
 ASfib
+
+
+SMRfib_Res <- ggplot(End, aes(x=Fibrosis, y=SMRPres_Resid, color=Ecotype)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Ecotype, shape = as.factor(Temp)), position = position_jitterdodge(jitter.width = .1, dodge.width = .8), size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98)) +
+  scale_color_manual(values = c('black', "blue")) +
+  geom_segment(aes(x = 1, xend = 2, y = max(SMRPres_Resid, na.rm=TRUE) * 1.05, 
+                   yend = max(SMRPres_Resid, na.rm=TRUE) * 1.05), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 1, xend = 1, y = max(SMRPres_Resid, na.rm=TRUE) * 1.05, 
+                   yend = max(SMRPres_Resid, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 2, xend = 2, y = max(SMRPres_Resid, na.rm=TRUE) * 1.05, 
+                   yend = max(SMRPres_Resid, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  annotate("text", x = 1.5, y = max(SMRPres_Resid, na.rm=TRUE) * 1.07, label = "*", size = 6) +
+  scale_x_discrete(labels= FibLabels) +
+  labs(x = "Fibrosis", y = expression(SMR~Residuals), tag = "B")
+SMRfib_Res
+
 
 SMRfib <- ggplot(End, aes(x=Fibrosis, y=RMR, color=Ecotype)) +
   geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
+  geom_jitter(aes(color = Ecotype, shape = as.factor(Temp)), position = position_jitterdodge(jitter.width = .1, dodge.width = .8), size = 3, alpha = 0.2) +
+  theme_classic(base_size = 14) +
   theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
         plot.tag.position = c(0.02, .98)) +
   scale_color_manual(values = c('black', "blue")) +
@@ -483,10 +542,34 @@ SMRfib <- ggplot(End, aes(x=Fibrosis, y=RMR, color=Ecotype)) +
   labs(x = "Fibrosis", y = expression(Standard~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "B")
 SMRfib
 
+
+MMRfib_Res <- ggplot(End, aes(x=Fibrosis, y=MMRPres_Resid, color=Ecotype)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Ecotype, shape = as.factor(Temp)), position = position_jitterdodge(jitter.width = .1, dodge.width = .8), size = 3, alpha = 0.2) +
+  theme_classic() +
+  theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
+        plot.tag.position = c(0.02, .98))+
+  scale_color_manual(values = c('black', "blue")) +
+  geom_segment(aes(x = 1, xend = 2, y = max(MMRPres_Resid, na.rm=TRUE) * 1.05, 
+                   yend = max(MMRPres_Resid, na.rm=TRUE) * 1.05), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 1, xend = 1, y = max(MMRPres_Resid, na.rm=TRUE) * 1.05, 
+                   yend = max(MMRPres_Resid, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  geom_segment(aes(x = 2, xend = 2, y = max(MMRPres_Resid, na.rm=TRUE) * 1.05, 
+                   yend = max(MMRPres_Resid, na.rm=TRUE) * 1.03), 
+               color = "black", inherit.aes = FALSE) +
+  annotate("text", x = 1.5, y = max(MMRPres_Resid, na.rm=TRUE) * 1.07, 
+           label = "*", size = 6) +  
+  scale_x_discrete(labels= FibLabels) +
+  labs(x = "Fibrosis", y = expression(MMR~Residuals), tag = "A")
+MMRfib_Res
+
+
 MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
   geom_boxplot() +
-  geom_jitter(shape=16, position=position_jitterdodge(jitter.width=0.2, dodge.width=0.75)) +
-  theme_classic() +
+  geom_jitter(aes(color = Ecotype, shape = as.factor(Temp)), position = position_jitterdodge(jitter.width = .1, dodge.width = .8), size = 3, alpha = 0.2) +
+  theme_classic(base_size = 14) +
   theme(legend.position = "none", plot.tag = element_text(size = 15, face = "bold"),
         plot.tag.position = c(0.02, .98))+
   scale_color_manual(values = c('black', "blue")) +
@@ -504,6 +587,7 @@ MMRfib <- ggplot(End, aes(x=Fibrosis, y=MMR, color=Ecotype)) +
   scale_x_discrete(labels= FibLabels) +
   labs(x = "Fibrosis", y = expression(Maximum~Metabolic~Rate~(mgO[2]/kg/hr)), tag = "A")
 MMRfib
+
 
 MMRFibSev <- ggplot(End, aes(x = FibrosisScore, y = MMR, color = Ecotype, group = Ecotype)) +
   geom_jitter(alpha = 0.4, position = position_jitterdodge(jitter.width = 0.2, dodge.width = .5, jitter.height = .2)) +
@@ -556,6 +640,8 @@ pdf(file = "NewFig4.pdf",
 MMRfib+ SMRfib + ASfib 
 
 dev.off()
+
+MMRfib_Res + SMRfib_Res + ASfib_Res
 
 pdf(file = "NewSuppFig4.pdf",
     width = 7, 
